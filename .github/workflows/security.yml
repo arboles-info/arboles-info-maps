@@ -70,7 +70,7 @@ jobs:
     - name: Run bandit (análisis de código Python)
       run: |
         bandit -r . -f json -o bandit-report.json || true
-        bandit -r . -f txt
+        bandit -r . -f screen
     
     - name: Run semgrep (análisis estático avanzado)
       run: |
