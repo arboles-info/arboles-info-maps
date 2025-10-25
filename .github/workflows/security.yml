@@ -75,7 +75,7 @@ jobs:
         semgrep --config=auto .
     
     - name: Upload security reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       if: always()
       with:
         name: python-security-reports
@@ -121,7 +121,7 @@ jobs:
         cat security-summary.md
     
     - name: Upload security summary
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: security-summary
         path: security-summary.md
