@@ -24,22 +24,18 @@ Este directorio contiene scripts para ejecutar las mismas verificaciones de segu
 ### `install-security-tools.sh`
 Instala todas las herramientas de seguridad necesarias:
 - **Safety**: Análisis de vulnerabilidades en dependencias Python
-- **Bandit**: Análisis de código Python
 - **Semgrep**: Análisis estático avanzado
 - **Checkov**: Análisis de configuración
 - **Retire.js**: Análisis de librerías JavaScript
-- **GitGuardian Shield**: Análisis de secretos
 
 ### `quick-security-check.sh`
 Ejecuta las mismas verificaciones que el pipeline `security-quick.yml`:
 - Verificación rápida de dependencias con Safety
-- Análisis básico de código con Bandit
 - Verificaciones manuales de patrones de seguridad comunes
 
 ### `run-security-checks.sh`
 Ejecuta todas las verificaciones del pipeline principal `security.yml`:
 - Análisis completo de dependencias
-- Análisis completo de código Python
 - Análisis estático avanzado
 - Verificaciones de configuración
 - Análisis de JavaScript
@@ -101,15 +97,8 @@ safety check --short-report
 
 ### Bandit (Código Python)
 ```bash
-# Análisis básico
-bandit -r .
-
-# Análisis con formato específico
-bandit -r . -f screen
-bandit -r . -f json -o bandit-report.json
-
-# Análisis con configuración personalizada
-bandit -r . -c .bandit
+# Bandit ha sido removido para simplificar los pipelines
+# Si necesitas análisis de código Python, considera usar Semgrep
 ```
 
 ### Semgrep (Análisis Estático)

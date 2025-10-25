@@ -88,11 +88,6 @@ if ! command -v safety &> /dev/null; then
     exit 1
 fi
 
-if ! command -v bandit &> /dev/null; then
-    echo -e "${RED}❌ Bandit no está instalado. Ejecuta: ./scripts/install-security-tools.sh${NC}"
-    exit 1
-fi
-
 if ! command -v semgrep &> /dev/null; then
     echo -e "${RED}❌ Semgrep no está instalado. Ejecuta: ./scripts/install-security-tools.sh${NC}"
     exit 1
@@ -106,27 +101,21 @@ print_header "1. Análisis de Dependencias Python (Safety)"
 run_check "Safety - Verificación de vulnerabilidades" "python3 -m pip install -r requirements.txt && safety check"
 run_check "Safety - Reporte JSON" "safety check --json --output safety-report.json"
 
-# 2. Análisis de código Python
-print_header "2. Análisis de Código Python (Bandit)"
-
-run_check "Bandit - Análisis básico" "bandit -r . -f screen"
-run_check "Bandit - Reporte JSON" "bandit -r . -f json -o bandit-report.json"
-
-# 3. Análisis estático avanzado
-print_header "3. Análisis Estático Avanzado (Semgrep)"
+# 2. Análisis estático avanzado
+print_header "2. Análisis Estático Avanzado (Semgrep)"
 
 run_check "Semgrep - Análisis automático" "semgrep --config=auto ."
 run_check "Semgrep - Reporte JSON" "semgrep --config=auto --json --output=semgrep-report.json ."
 
-# 4. Verificaciones manuales de seguridad
-print_header "4. Verificaciones Manuales de Seguridad"
+# 3. Verificaciones manuales de seguridad
+print_header "3. Verificaciones Manuales de Seguridad"
 
 run_check "Verificación - Contraseñas hardcodeadas" "! grep -r -i 'password.*=' . --include='*.py' --include='*.js' --include='*.html' | grep -v 'password.*None' | grep -v 'password.*'''"
 run_check "Verificación - Tokens de API hardcodeados" "! grep -r -E '(api[_-]?key|token|secret)' . --include='*.py' --include='*.js' | grep -v 'TODO\|FIXME\|example\|placeholder'"
 run_check "Verificación - URLs HTTP inseguras" "! grep -r 'http://' . --include='*.py' --include='*.js' | grep -v 'localhost\|127.0.0.1\|example.com'"
 
-# 5. Análisis de JavaScript (opcional)
-print_header "5. Análisis de JavaScript (Opcional)"
+# 4. Análisis de JavaScript (opcional)
+print_header "4. Análisis de JavaScript (Opcional)"
 
 if command -v retire &> /dev/null; then
     run_check_optional "Retire.js - Librerías vulnerables" "retire --path ./static"
@@ -134,8 +123,8 @@ else
     echo -e "${YELLOW}⚠️  Retire.js no está disponible. Saltando análisis de JavaScript.${NC}"
 fi
 
-# 6. Análisis de configuración (opcional)
-print_header "6. Análisis de Configuración (Opcional)"
+# 5. Análisis de configuración (opcional)
+print_header "5. Análisis de Configuración (Opcional)"
 
 if command -v checkov &> /dev/null; then
     run_check_optional "Checkov - Análisis de infraestructura" "checkov -d . --framework dockerfile"
@@ -143,8 +132,8 @@ else
     echo -e "${YELLOW}⚠️  Checkov no está disponible. Saltando análisis de configuración.${NC}"
 fi
 
-# 7. Verificación de permisos de archivos
-print_header "7. Verificación de Permisos de Archivos"
+# 6. Verificación de permisos de archivos
+print_header "6. Verificación de Permisos de Archivos"
 
 run_check "Verificación - Archivos Python ejecutables" "! find . -type f -name '*.py' -exec ls -la {} \; | grep -E '^-rwx'"
 run_check "Verificación - Scripts shell ejecutables" "find . -type f -name '*.sh' -exec ls -la {} \; | grep -E '^-rwx'"

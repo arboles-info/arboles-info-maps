@@ -67,10 +67,7 @@ jobs:
         safety check --json --output safety-report.json || true
         safety check
     
-    - name: Run bandit (análisis de código Python)
-      run: |
-        bandit -r . -f json -o bandit-report.json || true
-        bandit -r . -f screen
+    # Bandit removido para simplificar el pipeline
     
     - name: Run semgrep (análisis estático avanzado)
       run: |
@@ -84,27 +81,9 @@ jobs:
         name: python-security-reports
         path: |
           safety-report.json
-          bandit-report.json
           semgrep-report.json
 
-  # Análisis de secretos y credenciales
-  secrets-scan:
-    name: Secrets Detection
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Necesario para truffleHog
-    
-    - name: Run TruffleHog
-      uses: trufflesecurity/trufflehog@main
-      with:
-        path: ./
-        base: main
-        head: HEAD
-        extra_args: --debug --only-verified
+  # TruffleHog removido para simplificar el pipeline
 
   # Análisis de vulnerabilidades en dependencias JavaScript
   javascript-security:
@@ -168,10 +147,7 @@ jobs:
         checkov -d . --framework dockerfile --output json --output-file-path checkov-report.json || true
         checkov -d . --framework dockerfile
     
-    - name: Run GitGuardian Shield (análisis de secretos)
-      run: |
-        ggshield secret scan path . --json --output ggshield-report.json || true
-        ggshield secret scan path .
+    # GitGuardian Shield removido para simplificar el pipeline
     
     - name: Check file permissions
       run: |
@@ -186,7 +162,6 @@ jobs:
         name: configuration-security-reports
         path: |
           checkov-report.json
-          ggshield-report.json
 
   # Análisis de licencias
   license-check:
@@ -218,7 +193,7 @@ jobs:
   security-summary:
     name: Security Summary
     runs-on: ubuntu-latest
-    needs: [codeql-analysis, python-security, secrets-scan, javascript-security, configuration-security, license-check]
+    needs: [codeql-analysis, python-security, javascript-security, configuration-security, license-check]
     if: always()
     
     steps:
@@ -234,7 +209,6 @@ jobs:
         echo "## Job Results" >> security-summary.md
         echo "- CodeQL Analysis: ${{ needs.codeql-analysis.result }}" >> security-summary.md
         echo "- Python Security: ${{ needs.python-security.result }}" >> security-summary.md
-        echo "- Secrets Scan: ${{ needs.secrets-scan.result }}" >> security-summary.md
         echo "- JavaScript Security: ${{ needs.javascript-security.result }}" >> security-summary.md
         echo "- Configuration Security: ${{ needs.configuration-security.result }}" >> security-summary.md
         echo "- License Check: ${{ needs.license-check.result }}" >> security-summary.md

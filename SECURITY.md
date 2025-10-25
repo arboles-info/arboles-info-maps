@@ -16,12 +16,9 @@ El proyecto incluye varios pipelines de GitHub Actions para mantener la segurida
 **Herramientas incluidas:**
 - **CodeQL**: Análisis estático de código para detectar vulnerabilidades
 - **Safety**: Verificación de vulnerabilidades en dependencias Python
-- **Bandit**: Análisis de código Python para problemas de seguridad
 - **Semgrep**: Análisis estático avanzado con múltiples reglas
-- **TruffleHog**: Detección de secretos y credenciales hardcodeadas
 - **Retire.js**: Detección de librerías JavaScript vulnerables
 - **Checkov**: Análisis de configuración de infraestructura
-- **GitGuardian Shield**: Análisis adicional de secretos
 - **pip-licenses**: Verificación de licencias de dependencias
 
 ### 2. Pipeline de Verificación Rápida (`security-quick.yml`)
@@ -32,7 +29,6 @@ El proyecto incluye varios pipelines de GitHub Actions para mantener la segurida
 
 **Herramientas incluidas:**
 - **Safety**: Verificación rápida de dependencias
-- **Bandit**: Análisis básico de código Python
 - **Verificaciones manuales**: Búsqueda de patrones de seguridad comunes
 
 ### 3. Dependabot (`dependabot.yml`)
@@ -50,10 +46,8 @@ El proyecto incluye varios pipelines de GitHub Actions para mantener la segurida
 ## Configuración de Herramientas
 
 ### Bandit (`.bandit`)
-- Configurado para excluir falsos positivos comunes
-- Nivel de confianza: medium
-- Nivel de severidad: medium
-- Excluye directorios de test y entornos virtuales
+- **Removido**: Bandit ha sido eliminado para simplificar los pipelines
+- Se mantiene el archivo de configuración por compatibilidad
 
 ### Safety (`.safety`)
 - Nivel de reporte: medium
@@ -66,9 +60,8 @@ El proyecto incluye varios pipelines de GitHub Actions para mantener la segurida
 - Permite personalización por proyecto
 
 ### TruffleHog (`.trufflehogignore`)
-- Excluye archivos de configuración y documentación
-- Reduce falsos positivos en archivos de ejemplo
-- Excluye archivos de build y cache
+- **Removido**: TruffleHog ha sido eliminado para simplificar los pipelines
+- Se mantiene el archivo de configuración por compatibilidad
 
 ## Interpretación de Resultados
 

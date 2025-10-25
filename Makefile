@@ -21,11 +21,11 @@ install-security-tools: ## Instalar herramientas de seguridad
 
 security-quick: ## Ejecutar verificación rápida de seguridad (equivalente a security-quick.yml)
 	@echo "🚀 Ejecutando verificación rápida de seguridad..."
-	@./scripts/quick-security-check.sh
+	@bash -c "source $(VENV)/bin/activate && ./scripts/quick-security-check.sh"
 
 security-full: ## Ejecutar verificación completa de seguridad (equivalente a security.yml)
 	@echo "🔒 Ejecutando verificación completa de seguridad..."
-	@./scripts/run-security-checks.sh
+	@bash -c "source $(VENV)/bin/activate && ./scripts/run-security-checks.sh"
 
 security-install: ## Crear entorno virtual y instalar herramientas de seguridad
 	@echo "📦 Creando entorno virtual para seguridad..."

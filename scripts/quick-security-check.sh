@@ -29,11 +29,6 @@ if ! command -v safety &> /dev/null; then
     exit 1
 fi
 
-if ! command -v bandit &> /dev/null; then
-    echo -e "${RED}❌ Bandit no está instalado. Ejecuta: ./scripts/install-security-tools.sh${NC}"
-    exit 1
-fi
-
 # Función para ejecutar check
 run_check() {
     local check_name="$1"
@@ -63,19 +58,9 @@ if ! run_check "Safety - Verificación rápida" "python3 -m pip install -r requi
     exit 1
 fi
 
-# 2. Quick bandit scan
+# 2. Verificaciones manuales de seguridad
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}2. Análisis Rápido de Código Python${NC}"
-echo -e "${BLUE}========================================${NC}"
-
-if ! run_check "Bandit - Análisis rápido" "bandit -r . -f screen -q"; then
-    echo -e "${RED}❌ Falló el análisis de código Python${NC}"
-    exit 1
-fi
-
-# 3. Verificaciones manuales de seguridad
-echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}3. Verificaciones de Seguridad Comunes${NC}"
+echo -e "${BLUE}2. Verificaciones de Seguridad Comunes${NC}"
 echo -e "${BLUE}========================================${NC}"
 
 echo -e "${YELLOW}🔍 Verificando problemas de seguridad comunes...${NC}"

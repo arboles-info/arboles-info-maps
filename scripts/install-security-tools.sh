@@ -60,7 +60,7 @@ python3 -m pip install -r requirements.txt
 
 # Instalar herramientas de seguridad Python
 echo "🔒 Instalando herramientas de seguridad Python..."
-python3 -m pip install safety bandit semgrep
+python3 -m pip install safety semgrep
 
 # Instalar herramientas adicionales
 echo "🔍 Instalando herramientas adicionales..."
@@ -89,7 +89,6 @@ echo "✅ Herramientas de seguridad instaladas correctamente!"
 echo ""
 echo "📋 Herramientas disponibles:"
 echo "   - safety: Análisis de vulnerabilidades en dependencias Python"
-echo "   - bandit: Análisis de código Python"
 echo "   - semgrep: Análisis estático avanzado"
 echo "   - checkov: Análisis de configuración"
 echo "   - retire: Análisis de librerías JavaScript (si npm está disponible)"
