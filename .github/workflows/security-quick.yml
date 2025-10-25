@@ -1,0 +1,60 @@
+name: Quick Security Check
+
+on:
+  push:
+    branches: [ main, develop, feat/*, fix/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Verificación rápida de seguridad para PRs
+  quick-security:
+    name: Quick Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.13'
+    
+    - name: Install security tools
+      run: |
+        pip install safety bandit
+    
+    - name: Quick safety check
+      run: |
+        pip install -r requirements.txt
+        safety check --short-report
+    
+    - name: Quick bandit scan
+      run: |
+        bandit -r . -f short -q
+    
+    - name: Check for common security issues
+      run: |
+        echo "Checking for common security issues..."
+        
+        # Verificar que no hay contraseñas hardcodeadas
+        if grep -r -i "password.*=" . --include="*.py" --include="*.js" --include="*.html" | grep -v "password.*None" | grep -v "password.*''"; then
+          echo "WARNING: Potential hardcoded passwords found"
+          exit 1
+        fi
+        
+        # Verificar que no hay tokens de API hardcodeados
+        if grep -r -E "(api[_-]?key|token|secret)" . --include="*.py" --include="*.js" | grep -v "TODO\|FIXME\|example\|placeholder"; then
+          echo "WARNING: Potential hardcoded API keys or tokens found"
+          exit 1
+        fi
+        
+        # Verificar que no hay URLs HTTP inseguras en producción
+        if grep -r "http://" . --include="*.py" --include="*.js" | grep -v "localhost\|127.0.0.1\|example.com"; then
+          echo "WARNING: Insecure HTTP URLs found (use HTTPS in production)"
+          exit 1
+        fi
+        
+        echo "Quick security check passed!"

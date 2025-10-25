@@ -1,0 +1,82 @@
+# Configuración de Bandit para análisis de seguridad de Python
+# Archivo de configuración para excluir falsos positivos y personalizar el análisis
+
+[bandit]
+# Nivel de confianza mínimo para reportar problemas
+confidence = medium
+
+# Nivel de severidad mínimo para reportar problemas  
+severity = medium
+
+# Archivos y directorios a excluir del análisis
+exclude_dirs = venv,__pycache__,.git,.github,node_modules
+
+# Archivos específicos a excluir
+exclude = 
+    tests/
+    test_*.py
+    *_test.py
+
+# Tests específicos a excluir (por ID de test de Bandit)
+skips = 
+    B101  # assert_used - Los asserts están bien en código de desarrollo
+    B601  # shell_injection_subprocess - Necesario para algunas operaciones del sistema
+    B603  # subprocess_without_shell_equals_true - Controlado manualmente
+
+# Tests específicos a incluir (forzar ejecución)
+tests = 
+    B201  # flask_debug_true - Importante para aplicaciones Flask
+    B301  # pickle - Peligroso si se usa incorrectamente
+    B302  # marshal - Similar a pickle
+    B303  # md5 - Algoritmo de hash inseguro
+    B304  # cipher - Cifrado inseguro
+    B305  # cipher_mode - Modo de cifrado inseguro
+    B306  # mktemp_q - Función insegura para archivos temporales
+    B307  # eval - Ejecución de código dinámico
+    B308  # mark_safe - Django mark_safe
+    B309  # httpsconnection - Conexión HTTPS insegura
+    B310  # urllib_urlopen - URL abierta sin verificación
+    B311  # random - Generador de números aleatorios inseguro
+    B312  # telnetlib - Telnet inseguro
+    B313  # xml_bad_cElementTree - XML inseguro
+    B314  # xml_bad_ElementTree - XML inseguro
+    B315  # xml_bad_expatreader - XML inseguro
+    B316  # xml_bad_sax - XML inseguro
+    B317  # xml_bad_minidom - XML inseguro
+    B318  # xml_bad_pulldom - XML inseguro
+    B319  # xml_bad_etree - XML inseguro
+    B320  # xml_bad_lxml - XML inseguro
+    B321  # ftplib - FTP inseguro
+    B322  # input - input() inseguro
+    B323  # unverified_context - Contexto SSL no verificado
+    B324  # hashlib_new_insecure_functions - Funciones de hash inseguras
+    B325  # tempnam - Función temporal insegura
+    B501  # request_with_no_cert_validation - Requests sin validación de certificados
+    B502  # ssl_with_bad_version - SSL con versión insegura
+    B503  # ssl_with_bad_defaults - SSL con configuración insegura
+    B504  # ssl_with_no_version - SSL sin versión especificada
+    B505  # weak_cryptographic_key - Clave criptográfica débil
+    B506  # yaml_load - YAML load inseguro
+    B507  # ssh_no_host_key_verification - SSH sin verificación de clave de host
+    B508  # snmp_insecure_version - SNMP versión insegura
+    B509  # snmp_weak_cryptography - SNMP criptografía débil
+    B601  # shell_injection_subprocess - Inyección de shell en subprocess
+    B602  # subprocess_popen_with_shell_equals_true - Popen con shell=True
+    B603  # subprocess_without_shell_equals_true - Subprocess sin shell=True
+    B604  # any_other_function_with_shell_equals_true - Otras funciones con shell=True
+    B605  # start_process_with_a_shell - Iniciar proceso con shell
+    B606  # start_process_with_no_shell - Iniciar proceso sin shell
+    B607  # start_process_with_partial_path - Iniciar proceso con ruta parcial
+    B608  # hardcoded_sql_expressions - Expresiones SQL hardcodeadas
+    B609  # linux_commands_wildcard_injection - Inyección de wildcard en comandos Linux
+    B610  # django_extra_used - Django extra() usado
+    B611  # django_rawsql_used - Django raw SQL usado
+    B701  # jinja2_autoescape_false - Jinja2 autoescape=False
+    B702  # use_of_mako_templates - Uso de plantillas Mako
+    B703  # django_mark_safe - Django mark_safe
+    B704  # hardcoded_password_string - Contraseña hardcodeada
+    B705  # hardcoded_password_funcarg - Contraseña como argumento de función
+    B706  # hardcoded_password_default - Contraseña como valor por defecto
+    B707  # hardcoded_password_string - Contraseña hardcodeada (otra variante)
+    B708  # no_hardcoded_password_subprocess - Contraseña hardcodeada en subprocess
+    B801  # jinja2_autoescape_false - Jinja2 autoescape=False (otra variante)

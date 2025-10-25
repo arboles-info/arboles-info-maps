@@ -1,0 +1,37 @@
+# Configuración de Safety para análisis de vulnerabilidades en dependencias Python
+# Este archivo permite personalizar el comportamiento de safety
+
+# Nivel de reporte (low, medium, high, critical)
+report_level = medium
+
+# Incluir información de remediación
+include_remediation = true
+
+# Formato de salida (json, text, short)
+output_format = text
+
+# Archivo de salida (opcional)
+# output_file = safety-report.txt
+
+# Ignorar vulnerabilidades específicas por ID
+# ignore = 
+#     12345  # ID de vulnerabilidad específica
+#     67890  # Otra vulnerabilidad
+
+# Incluir vulnerabilidades de desarrollo (por defecto se excluyen)
+include_dev = false
+
+# Verificar solo las dependencias instaladas
+installed_only = true
+
+# Usar base de datos local (si está disponible)
+# db = /path/to/local/db
+
+# Configuración de proxy (si es necesario)
+# proxy = http://proxy.example.com:8080
+
+# Configuración de timeout
+timeout = 30
+
+# Verbose output
+verbose = false
