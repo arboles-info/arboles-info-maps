@@ -1,0 +1,34 @@
+name: opentrees-web
+region: nyc
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+
+# Configuración de la aplicación
+http_service:
+  name: opentrees-web-http
+  routes:
+    - path: /
+  
+  health_check:
+    http_path: /
+    initial_delay_seconds: 60
+    period_seconds: 10
+    timeout_seconds: 5
+    failure_threshold: 5
+    success_threshold: 2
+
+  instance_count: 1
+  instance_size_slug: basic-xxs
+
+  # Build configuration
+  build_command: pip install --upgrade pip && pip install -r requirements.txt
+  run_command: uvicorn main:app --host 0.0.0.0 --port $PORT
+
+  # Variables de entorno
+  envs:
+    - key: PYTHONUNBUFFERED
+      value: "1"
+    - key: PORT
+      value: "8080"
+      scope: RUN_TIME
