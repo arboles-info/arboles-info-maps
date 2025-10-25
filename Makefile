@@ -5,7 +5,7 @@
 
 # Variables
 PYTHON := python3
-PIP := pip3
+PIP := python3 -m pip
 VENV := venv-security
 
 # Ayuda por defecto

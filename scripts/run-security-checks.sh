@@ -103,7 +103,7 @@ echo -e "${GREEN}✅ Todas las herramientas están instaladas${NC}"
 # 1. Análisis de dependencias Python
 print_header "1. Análisis de Dependencias Python (Safety)"
 
-run_check "Safety - Verificación de vulnerabilidades" "safety check"
+run_check "Safety - Verificación de vulnerabilidades" "python3 -m pip install -r requirements.txt && safety check"
 run_check "Safety - Reporte JSON" "safety check --json --output safety-report.json"
 
 # 2. Análisis de código Python

@@ -58,7 +58,7 @@ echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}1. Verificación Rápida de Dependencias${NC}"
 echo -e "${BLUE}========================================${NC}"
 
-if ! run_check "Safety - Verificación rápida" "pip install -r requirements.txt && safety check --short-report"; then
+if ! run_check "Safety - Verificación rápida" "python3 -m pip install -r requirements.txt && safety check --short-report"; then
     echo -e "${RED}❌ Falló la verificación de dependencias${NC}"
     exit 1
 fi
