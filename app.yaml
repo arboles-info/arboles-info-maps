@@ -1,0 +1,30 @@
+name: opentrees-web
+region: nyc
+
+# Configuración de build
+build:
+  commands:
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+
+# Configuración de la aplicación
+run:
+  command: uvicorn main:app --host 0.0.0.0 --port $PORT
+  http_port: 8080
+
+# Variables de entorno
+envs:
+  - key: PYTHONUNBUFFERED
+    value: "1"
+  - key: PORT
+    value: "8080"
+    scope: RUN_TIME
+
+# Configuración de salud
+health_check:
+  http_path: /
+  initial_delay_seconds: 30
+  period_seconds: 10
+  timeout_seconds: 5
+  failure_threshold: 3
+  success_threshold: 1
