@@ -1,0 +1,46 @@
+# Archivos y directorios a ignorar en el análisis de Semgrep
+
+# Directorios de dependencias y entornos virtuales
+venv/
+__pycache__/
+.git/
+.github/
+node_modules/
+.pytest_cache/
+.coverage/
+htmlcov/
+
+# Archivos de configuración y logs
+*.log
+*.tmp
+*.temp
+.env
+.env.local
+.env.production
+
+# Archivos de build y distribución
+build/
+dist/
+*.egg-info/
+*.whl
+*.tar.gz
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de test (opcional, descomenta si quieres excluir tests)
+# tests/
+# test_*.py
+# *_test.py
+
+# Archivos específicos del proyecto que pueden generar falsos positivos
+# static/app.js  # Descomenta si hay muchos falsos positivos en JS
+# main.py        # Descomenta si hay muchos falsos positivos en el código principal
