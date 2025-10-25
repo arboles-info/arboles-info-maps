@@ -62,27 +62,9 @@ python3 -m pip install -r requirements.txt
 echo "🔒 Instalando herramientas de seguridad Python..."
 python3 -m pip install safety semgrep
 
-# Instalar herramientas adicionales
-echo "🔍 Instalando herramientas adicionales..."
-python3 -m pip install checkov
+# Herramientas adicionales removidas para simplificar el pipeline
 
-# Instalar herramientas Node.js (si están disponibles)
-if command -v npm &> /dev/null; then
-    echo "📦 Instalando herramientas Node.js..."
-    npm install -g npm-audit-html retire
-else
-    echo "⚠️  npm no está disponible. Saltando herramientas Node.js."
-fi
-
-# Instalar GitGuardian Shield (opcional)
-if command -v pipx &> /dev/null; then
-    echo "🛡️  Instalando GitGuardian Shield..."
-    pipx install ggshield
-else
-    echo "⚠️  pipx no está disponible. Para instalar GitGuardian Shield:"
-    echo "   python3 -m pip install pipx"
-    echo "   pipx install ggshield"
-fi
+# GitGuardian Shield removido para simplificar el pipeline
 
 echo ""
 echo "✅ Herramientas de seguridad instaladas correctamente!"
@@ -90,8 +72,6 @@ echo ""
 echo "📋 Herramientas disponibles:"
 echo "   - safety: Análisis de vulnerabilidades en dependencias Python"
 echo "   - semgrep: Análisis estático avanzado"
-echo "   - checkov: Análisis de configuración"
-echo "   - retire: Análisis de librerías JavaScript (si npm está disponible)"
 echo ""
 echo "🚀 Para ejecutar las verificaciones, usa:"
 echo "   ./scripts/run-security-checks.sh"

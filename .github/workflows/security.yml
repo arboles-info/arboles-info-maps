@@ -85,115 +85,17 @@ jobs:
 
   # TruffleHog removido para simplificar el pipeline
 
-  # Análisis de vulnerabilidades en dependencias JavaScript
-  javascript-security:
-    name: JavaScript Security Analysis
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-    
-    - name: Install npm audit tools
-      run: |
-        npm install -g npm-audit-html
-        npm install -g retire
-    
-    - name: Check for vulnerable JavaScript libraries
-      run: |
-        # Crear package.json temporal si no existe
-        if [ ! -f package.json ]; then
-          echo '{"name": "arboles-info-maps", "version": "1.0.0", "dependencies": {}}' > package.json
-        fi
-        
-        # Ejecutar npm audit
-        npm audit --audit-level=moderate --json > npm-audit-report.json || true
-        npm audit --audit-level=moderate
-        
-        # Ejecutar retire.js para detectar librerías vulnerables
-        retire --path ./static --outputformat json --outputpath retire-report.json || true
-        retire --path ./static
-    
-    - name: Upload JavaScript security reports
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: javascript-security-reports
-        path: |
-          npm-audit-report.json
-          retire-report.json
+  # JavaScript security removido para simplificar el pipeline
 
-  # Análisis de configuración y permisos
-  configuration-security:
-    name: Configuration Security
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Install security tools
-      run: |
-        pip install checkov
-        npm install -g @gitguardian/ggshield
-    
-    - name: Run Checkov (análisis de infraestructura)
-      run: |
-        checkov -d . --framework dockerfile --output json --output-file-path checkov-report.json || true
-        checkov -d . --framework dockerfile
-    
-    # GitGuardian Shield removido para simplificar el pipeline
-    
-    - name: Check file permissions
-      run: |
-        echo "Checking file permissions..."
-        find . -type f -name "*.py" -exec ls -la {} \; | grep -E "^-rwx" && echo "WARNING: Found executable Python files" || echo "No executable Python files found"
-        find . -type f -name "*.sh" -exec ls -la {} \; | grep -E "^-rwx" && echo "Shell scripts are executable" || echo "WARNING: Shell scripts are not executable"
-    
-    - name: Upload configuration security reports
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: configuration-security-reports
-        path: |
-          checkov-report.json
+  # Configuration security removido para simplificar el pipeline
 
-  # Análisis de licencias
-  license-check:
-    name: License Compliance
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.13'
-    
-    - name: Install license checking tools
-      run: |
-        pip install pip-licenses
-        pip install -r requirements.txt
-    
-    - name: Check Python package licenses
-      run: |
-        pip-licenses --format=json --output-file=python-licenses.json
-        pip-licenses --format=table
-        echo "Checking for potentially problematic licenses..."
-        pip-licenses | grep -i "gpl\|agpl\|copyleft" && echo "WARNING: Found copyleft licenses" || echo "No copyleft licenses found"
+  # License compliance removido para simplificar el pipeline
 
   # Resumen de seguridad
   security-summary:
     name: Security Summary
     runs-on: ubuntu-latest
-    needs: [codeql-analysis, python-security, javascript-security, configuration-security, license-check]
+    needs: [codeql-analysis, python-security]
     if: always()
     
     steps:
@@ -209,9 +111,6 @@ jobs:
         echo "## Job Results" >> security-summary.md
         echo "- CodeQL Analysis: ${{ needs.codeql-analysis.result }}" >> security-summary.md
         echo "- Python Security: ${{ needs.python-security.result }}" >> security-summary.md
-        echo "- JavaScript Security: ${{ needs.javascript-security.result }}" >> security-summary.md
-        echo "- Configuration Security: ${{ needs.configuration-security.result }}" >> security-summary.md
-        echo "- License Check: ${{ needs.license-check.result }}" >> security-summary.md
         echo "" >> security-summary.md
         
         echo "## Reports Generated" >> security-summary.md

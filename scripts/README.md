@@ -25,8 +25,6 @@ Este directorio contiene scripts para ejecutar las mismas verificaciones de segu
 Instala todas las herramientas de seguridad necesarias:
 - **Safety**: Análisis de vulnerabilidades en dependencias Python
 - **Semgrep**: Análisis estático avanzado
-- **Checkov**: Análisis de configuración
-- **Retire.js**: Análisis de librerías JavaScript
 
 ### `quick-security-check.sh`
 Ejecuta las mismas verificaciones que el pipeline `security-quick.yml`:
@@ -37,8 +35,6 @@ Ejecuta las mismas verificaciones que el pipeline `security-quick.yml`:
 Ejecuta todas las verificaciones del pipeline principal `security.yml`:
 - Análisis completo de dependencias
 - Análisis estático avanzado
-- Verificaciones de configuración
-- Análisis de JavaScript
 - Verificación de permisos de archivos
 
 ## 🔧 Configuración
@@ -76,7 +72,6 @@ Los scripts respetan las siguientes variables de entorno:
 ### Reportes Generados
 Los scripts generan reportes en formato JSON:
 - `safety-report.json`: Vulnerabilidades en dependencias
-- `bandit-report.json`: Problemas en código Python
 - `semgrep-report.json`: Análisis estático avanzado
 
 ## 🛠️ Comandos Individuales
@@ -147,14 +142,13 @@ source venv-security/bin/activate
 
 ### Falsos Positivos
 Si encuentras falsos positivos, puedes:
-1. Actualizar los archivos de configuración (`.bandit`, `.safety`, etc.)
+1. Actualizar los archivos de configuración (`.safety`, etc.)
 2. Usar comentarios `# nosec` en el código
 3. Ajustar los niveles de severidad
 
 ## 📚 Recursos Adicionales
 
 - [Documentación de Safety](https://pyup.io/safety/)
-- [Documentación de Bandit](https://bandit.readthedocs.io/)
 - [Documentación de Semgrep](https://semgrep.dev/docs/)
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 

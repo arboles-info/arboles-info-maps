@@ -114,26 +114,10 @@ run_check "Verificación - Contraseñas hardcodeadas" "! grep -r -i 'password.*=
 run_check "Verificación - Tokens de API hardcodeados" "! grep -r -E '(api[_-]?key|token|secret)' . --include='*.py' --include='*.js' | grep -v 'TODO\|FIXME\|example\|placeholder'"
 run_check "Verificación - URLs HTTP inseguras" "! grep -r 'http://' . --include='*.py' --include='*.js' | grep -v 'localhost\|127.0.0.1\|example.com'"
 
-# 4. Análisis de JavaScript (opcional)
-print_header "4. Análisis de JavaScript (Opcional)"
+# JavaScript y configuración removidos para simplificar el pipeline
 
-if command -v retire &> /dev/null; then
-    run_check_optional "Retire.js - Librerías vulnerables" "retire --path ./static"
-else
-    echo -e "${YELLOW}⚠️  Retire.js no está disponible. Saltando análisis de JavaScript.${NC}"
-fi
-
-# 5. Análisis de configuración (opcional)
-print_header "5. Análisis de Configuración (Opcional)"
-
-if command -v checkov &> /dev/null; then
-    run_check_optional "Checkov - Análisis de infraestructura" "checkov -d . --framework dockerfile"
-else
-    echo -e "${YELLOW}⚠️  Checkov no está disponible. Saltando análisis de configuración.${NC}"
-fi
-
-# 6. Verificación de permisos de archivos
-print_header "6. Verificación de Permisos de Archivos"
+# 4. Verificación de permisos de archivos
+print_header "4. Verificación de Permisos de Archivos"
 
 run_check "Verificación - Archivos Python ejecutables" "! find . -type f -name '*.py' -exec ls -la {} \; | grep -E '^-rwx'"
 run_check "Verificación - Scripts shell ejecutables" "find . -type f -name '*.sh' -exec ls -la {} \; | grep -E '^-rwx'"

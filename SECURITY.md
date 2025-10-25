@@ -17,9 +17,6 @@ El proyecto incluye varios pipelines de GitHub Actions para mantener la segurida
 - **CodeQL**: Análisis estático de código para detectar vulnerabilidades
 - **Safety**: Verificación de vulnerabilidades en dependencias Python
 - **Semgrep**: Análisis estático avanzado con múltiples reglas
-- **Retire.js**: Detección de librerías JavaScript vulnerables
-- **Checkov**: Análisis de configuración de infraestructura
-- **pip-licenses**: Verificación de licencias de dependencias
 
 ### 2. Pipeline de Verificación Rápida (`security-quick.yml`)
 
