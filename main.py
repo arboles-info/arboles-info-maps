@@ -158,7 +158,11 @@ async def get_trees(
         
         for element in result.get("elements")[:limit]:
             if element.get("type") == "node":
-                trees.append(parse_tree_element(element))
+                try:
+                    trees.append(parse_tree_element(element))
+                except Exception as e:
+                    logger.error(f"Error parsing tree element: {e}")
+                    continue
         
         return trees
     except HTTPException:
@@ -185,9 +189,9 @@ async def get_stumps(
     min_lat, min_lon, max_lat, max_lon = map(float, bbox.split(","))
     bbox_str = bbox
 
-    logger.info(f"Getting stumps for bbox: {bbox_str}")
-    logger.info(f"Getting stumps for species: {species}")
-    logger.info(f"Getting stumps for limit: {limit}")
+    logger.debug(f"Getting stumps for bbox: {bbox_str}")
+    logger.debug(f"Getting stumps for species: {species}")
+    logger.debug(f"Getting stumps for limit: {limit}")
     
     # Query Overpass para tocones (optimizada)
     if species:
@@ -213,7 +217,11 @@ async def get_stumps(
         
         for element in result.get("elements", [])[:limit]:
             if element.get("type") == "node":
-                stumps.append(parse_stump_element(element))
+                try:
+                    stumps.append(parse_stump_element(element))
+                except Exception as e:
+                    logger.error(f"Error parsing stump element: {e}")
+                    continue
         
 
         return stumps
