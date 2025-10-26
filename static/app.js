@@ -31,14 +31,15 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeMap();
     initializeEventListeners();
     loadSpecies();
-    updateBboxFromMap();
+    // Intentar geolocalizar al usuario antes de actualizar el bbox
+    getUserLocation();
 });
 
 /**
  * Inicializar el mapa de Leaflet
  */
 function initializeMap() {
-    // Crear el mapa centrado en Rota
+    // Crear el mapa centrado en Rota (posición por defecto)
     map = L.map('map').setView([36.627719378319, -6.3697957992555], 13);
     
     // Añadir capa de tiles de OpenStreetMap
@@ -53,6 +54,122 @@ function initializeMap() {
     // Event listeners para el mapa
     map.on('moveend', onMapMoveEnd);
     map.on('zoomend', onMapMoveEnd);
+}
+
+/**
+ * Obtener la ubicación del usuario usando la API de geolocalización
+ */
+function getUserLocation() {
+    // Mostrar indicador de carga para geolocalización
+    showLocationLoading(true);
+    
+    if (!navigator.geolocation) {
+        console.log('Geolocalización no soportada por este navegador');
+        showLocationLoading(false);
+        // Usar posición por defecto
+        updateBboxFromMap();
+        return;
+    }
+    
+    const options = {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000 // 5 minutos
+    };
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            // Éxito: centrar el mapa en la ubicación del usuario
+            const userLat = position.coords.latitude;
+            const userLon = position.coords.longitude;
+            
+            console.log(`Ubicación del usuario: ${userLat}, ${userLon}`);
+            
+            // Centrar el mapa en la ubicación del usuario
+            map.setView([userLat, userLon], 15);
+            
+            // Actualizar el bbox basado en la nueva posición
+            updateBboxFromMap();
+            
+            showLocationLoading(false);
+            
+            // Mostrar mensaje de éxito
+            showLocationMessage('Ubicación obtenida correctamente', 'success');
+        },
+        function(error) {
+            // Error: usar posición por defecto
+            console.log('Error al obtener ubicación:', error.message);
+            showLocationLoading(false);
+            
+            // Usar posición por defecto
+            updateBboxFromMap();
+            
+            // Mostrar mensaje de error
+            let errorMessage = 'No se pudo obtener tu ubicación. ';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage += 'Permisos de ubicación denegados.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage += 'Ubicación no disponible.';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage += 'Tiempo de espera agotado.';
+                    break;
+                default:
+                    errorMessage += 'Error desconocido.';
+                    break;
+            }
+            showLocationMessage(errorMessage, 'error');
+        },
+        options
+    );
+}
+
+/**
+ * Mostrar/ocultar indicador de carga para geolocalización
+ * @param {boolean} show - Mostrar o ocultar el loading
+ */
+function showLocationLoading(show) {
+    const loading = document.getElementById('loading');
+    if (show) {
+        loading.innerHTML = '<p>Obteniendo tu ubicación...</p>';
+        loading.classList.add('show');
+    } else {
+        loading.innerHTML = '<p>Cargando datos de OpenStreetMap...</p>';
+        loading.classList.remove('show');
+    }
+}
+
+/**
+ * Mostrar mensaje de geolocalización
+ * @param {string} message - Mensaje a mostrar
+ * @param {string} type - Tipo de mensaje ('success' o 'error')
+ */
+function showLocationMessage(message, type) {
+    // Crear elemento de mensaje si no existe
+    let messageElement = document.getElementById('location-message');
+    if (!messageElement) {
+        messageElement = document.createElement('div');
+        messageElement.id = 'location-message';
+        messageElement.className = 'location-message';
+        document.querySelector('.header').appendChild(messageElement);
+    }
+    
+    messageElement.textContent = message;
+    messageElement.className = `location-message ${type}`;
+    
+    // Ocultar mensaje después de 5 segundos
+    setTimeout(() => {
+        if (messageElement) {
+            messageElement.style.opacity = '0';
+            setTimeout(() => {
+                if (messageElement && messageElement.parentNode) {
+                    messageElement.parentNode.removeChild(messageElement);
+                }
+            }, 300);
+        }
+    }, 5000);
 }
 
 /**
