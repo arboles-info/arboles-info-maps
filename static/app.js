@@ -13,6 +13,7 @@ let autoUpdateEnabled = true;
 let autoFitBoundsEnabled = true;
 let isUpdatingBbox = false;
 let isProgrammaticMove = false;
+let loadDataButtonEnabled = true;
 
 // Estado de visibilidad de las capas
 let layerVisibility = {
@@ -31,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeMap();
     initializeEventListeners();
     loadSpecies();
-    // Intentar geolocalizar al usuario antes de actualizar el bbox
+    // Intentar geolocalizar al usuario antes de actualizar el bbox y cargar datos
     getUserLocation();
 });
 
@@ -68,6 +69,8 @@ function getUserLocation() {
         showLocationLoading(false);
         // Usar posición por defecto
         updateBboxFromMap();
+        // Cargar datos con la posición por defecto
+        loadData();
         return;
     }
     
@@ -95,6 +98,9 @@ function getUserLocation() {
             
             // Mostrar mensaje de éxito
             showLocationMessage('Ubicación obtenida correctamente', 'success');
+            
+            // Cargar datos después de obtener la ubicación
+            loadData();
         },
         function(error) {
             // Error: usar posición por defecto
@@ -121,6 +127,9 @@ function getUserLocation() {
                     break;
             }
             showLocationMessage(errorMessage, 'error');
+            
+            // Cargar datos incluso si falló la geolocalización
+            loadData();
         },
         options
     );
@@ -205,6 +214,27 @@ function showLoading(show) {
         loading.classList.add('show');
     } else {
         loading.classList.remove('show');
+    }
+}
+
+/**
+ * Controlar el estado del botón "Cargar Datos"
+ * @param {boolean} enabled - Habilitar o deshabilitar el botón
+ */
+function setLoadDataButtonState(enabled) {
+    const loadDataButton = document.querySelector('button[onclick="loadData()"]');
+    if (loadDataButton) {
+        loadDataButton.disabled = !enabled;
+        loadDataButtonEnabled = enabled;
+        
+        // Cambiar el estilo visual del botón
+        if (enabled) {
+            loadDataButton.style.opacity = '1';
+            loadDataButton.style.cursor = 'pointer';
+        } else {
+            loadDataButton.style.opacity = '0.6';
+            loadDataButton.style.cursor = 'not-allowed';
+        }
     }
 }
 
@@ -324,6 +354,8 @@ async function loadSpecies() {
  * Cargar datos de árboles y tocones desde la API
  */
 async function loadData() {
+    // Deshabilitar el botón al inicio de la carga
+    setLoadDataButtonState(false);
     showLoading(true);
     
     const species = document.getElementById('species').value;
@@ -408,6 +440,8 @@ async function loadData() {
     } catch (error) {
         console.error('Error al cargar datos:', error);
         alert('Error al cargar los datos. Por favor, inténtalo de nuevo.');
+        // En caso de error, habilitar el botón para permitir reintento
+        setLoadDataButtonState(true);
     } finally {
         showLoading(false);
     }
@@ -599,6 +633,11 @@ function updateLegendIndicator(layerType) {
  * Manejar el evento de fin de movimiento del mapa
  */
 function onMapMoveEnd() {
+    // Habilitar el botón "Cargar Datos" cuando el usuario mueva el mapa
+    if (!isProgrammaticMove) {
+        setLoadDataButtonState(true);
+    }
+    
     if (autoUpdateEnabled && !isProgrammaticMove) {
         updateBboxFromMap();
     }
