@@ -1,6 +1,6 @@
 /**
- * OpenTrees Web - Aplicación JavaScript
- * Visualizador de árboles y tocones de Rota, Cádiz usando datos de OpenStreetMap
+ * Mapa de árboles y tocones - Aplicación JavaScript
+ * Visualizador de árboles y tocones usando datos de OpenStreetMap
  */
 
 // Variables globales
@@ -14,6 +14,7 @@ let autoFitBoundsEnabled = true;
 let isUpdatingBbox = false;
 let isProgrammaticMove = false;
 let loadDataButtonEnabled = true;
+let controlsExpanded = false;
 
 // Estado de visibilidad de las capas
 let layerVisibility = {
@@ -31,7 +32,7 @@ let stumpsData = [];
 document.addEventListener('DOMContentLoaded', function() {
     initializeMap();
     initializeEventListeners();
-    loadSpecies();
+    initializeControlsState();
     // Intentar geolocalizar al usuario antes de actualizar el bbox y cargar datos
     getUserLocation();
 });
@@ -186,7 +187,6 @@ function showLocationMessage(message, type) {
  */
 function initializeEventListeners() {
     // Event listeners para controles
-    document.getElementById('species').addEventListener('change', loadData);
     document.getElementById('bbox').addEventListener('change', function() {
         if (!isUpdatingBbox) {
             loadData();
@@ -242,9 +242,15 @@ function setLoadDataButtonState(enabled) {
  * Actualizar estadísticas en la interfaz
  */
 function updateStats() {
+    // Actualizar estadísticas laterales (desktop)
     document.getElementById('tree-count').textContent = treeCount;
     document.getElementById('stump-count').textContent = stumpCount;
     document.getElementById('total-count').textContent = treeCount + stumpCount;
+    
+    // Actualizar estadísticas móviles
+    document.getElementById('mobile-tree-count').textContent = treeCount;
+    document.getElementById('mobile-stump-count').textContent = stumpCount;
+    document.getElementById('mobile-total-count').textContent = treeCount + stumpCount;
     
     // Actualizar desglose por especies
     updateSpeciesBreakdown();
@@ -328,27 +334,6 @@ function createStumpPopup(stump) {
     return content;
 }
 
-/**
- * Cargar especies disponibles desde la API
- */
-async function loadSpecies() {
-    try {
-        const response = await fetch('/api/species');
-        const data = await response.json();
-        
-        const speciesSelect = document.getElementById('species');
-        speciesSelect.innerHTML = '<option value="">Todas las especies</option>';
-        
-        data.species.forEach(species => {
-            const option = document.createElement('option');
-            option.value = species;
-            option.textContent = species;
-            speciesSelect.appendChild(option);
-        });
-    } catch (error) {
-        console.error('Error al cargar especies:', error);
-    }
-}
 
 /**
  * Cargar datos de árboles y tocones desde la API
@@ -358,7 +343,6 @@ async function loadData() {
     setLoadDataButtonState(false);
     showLoading(true);
     
-    const species = document.getElementById('species').value;
     const bbox = document.getElementById('bbox').value;
     const limit = document.getElementById('limit').value;
     
@@ -373,13 +357,8 @@ async function loadData() {
         treesData = [];
         stumpsData = [];
         
-        // Resetear visibilidad de capas
-        layerVisibility.trees = true;
-        layerVisibility.stumps = true;
-        
         // Construir parámetros de consulta
         const params = new URLSearchParams();
-        if (species) params.append('species', species);
         if (bbox) params.append('bbox', bbox);
         if (limit) params.append('limit', limit);
         
@@ -429,7 +408,7 @@ async function loadData() {
         // Actualizar estadísticas
         updateStats();
         
-        // Aplicar el estado de visibilidad (reseteado a visible)
+        // Aplicar el estado de visibilidad actual
         applyLayerVisibility();
         
         // Ajustar vista del mapa si hay datos y está habilitado
@@ -531,11 +510,7 @@ function clearMap() {
     
     updateStats();
     
-    // Resetear estado de visibilidad
-    layerVisibility.trees = true;
-    layerVisibility.stumps = true;
-    
-    // Aplicar estado de visibilidad
+    // Aplicar estado de visibilidad actual
     applyLayerVisibility();
 }
 
@@ -642,5 +617,57 @@ function onMapMoveEnd() {
         updateBboxFromMap();
         // Cargar datos automáticamente después de actualizar el bbox
         loadData();
+    }
+}
+
+/**
+ * Inicializar el estado de los controles basado en el tamaño de pantalla
+ */
+function initializeControlsState() {
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+        // En móviles, los controles empiezan colapsados
+        controlsExpanded = false;
+        const controls = document.getElementById('controls');
+        const toggleIcon = document.querySelector('.toggle-icon');
+        const toggleText = document.querySelector('.toggle-text');
+        
+        controls.classList.add('collapsed');
+        toggleIcon.textContent = '⚙️';
+        toggleText.textContent = 'Controles';
+    } else {
+        // En desktop, los controles empiezan expandidos
+        controlsExpanded = true;
+        const controls = document.getElementById('controls');
+        const toggleIcon = document.querySelector('.toggle-icon');
+        const toggleText = document.querySelector('.toggle-text');
+        
+        controls.classList.add('expanded');
+        toggleIcon.textContent = '🔽';
+        toggleText.textContent = 'Ocultar Controles';
+    }
+}
+
+/**
+ * Alternar la visibilidad de los controles
+ */
+function toggleControls() {
+    const controls = document.getElementById('controls');
+    const toggleIcon = document.querySelector('.toggle-icon');
+    const toggleText = document.querySelector('.toggle-text');
+    
+    controlsExpanded = !controlsExpanded;
+    
+    if (controlsExpanded) {
+        controls.classList.add('expanded');
+        controls.classList.remove('collapsed');
+        toggleIcon.textContent = '🔽';
+        toggleText.textContent = 'Ocultar Controles';
+    } else {
+        controls.classList.add('collapsed');
+        controls.classList.remove('expanded');
+        toggleIcon.textContent = '⚙️';
+        toggleText.textContent = 'Controles';
     }
 }

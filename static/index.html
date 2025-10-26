@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenTrees Web - Visualizador de Árboles y Tocones</title>
+    <title>Mapa de árboles y tocones - Visualizador de Árboles y Tocones</title>
     
     <!-- Favicon con emoji de árbol -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌳</text></svg>">
@@ -18,46 +18,55 @@
 </head>
 <body>
     <div class="header">
-        <h1>🌳 OpenTrees Web</h1>
-        <p>Visualizador de árboles y tocones usando datos de OpenStreetMap</p>
+        <h1>🌳 Mapa de árboles y tocones</h1>
+        <p>Este mapa utiliza datos de OpenStreetMap <a href="https://www.openstreetmap.org/about" target="_blank" rel="noopener noreferrer">🔗</a></p>
     </div>
     
-    <div class="controls">
-        <div class="control-group">
-            <label for="species">Especie:</label>
-            <select id="species">
-                <option value="">Todas las especies</option>
-            </select>
-        </div>
+    <div class="controls-container">
+        <button class="controls-toggle" onclick="toggleControls()">
+            <span class="toggle-icon">⚙️</span>
+            <span class="toggle-text">Controles</span>
+        </button>
         
-        <div class="control-group">
-            <label for="bbox">Área (lat,lon,lat,lon):</label>
-            <input type="text" id="bbox" placeholder="36.613770852449,-6.410994529724,36.641667904189,-6.328597068787" value="36.613770852449,-6.410994529724,36.641667904189,-6.328597068787">
+        <div class="controls" id="controls">
+            <div class="control-group">
+                <label for="bbox">Área (lat,lon,lat,lon):</label>
+                <input type="text" id="bbox" placeholder="36.613770852449,-6.410994529724,36.641667904189,-6.328597068787" value="36.613770852449,-6.410994529724,36.641667904189,-6.328597068787">
+            </div>
+            
+            <div class="control-group">
+                <label for="limit">Límite de resultados:</label>
+                <input type="number" id="limit" value="500" min="10" max="1000">
+            </div>
+            
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="autoUpdate" checked> Actualización automática
+                </label>
+            </div>
+            
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="autoFitBounds" checked> Ajustar vista a datos
+                </label>
+            </div>
+            
+            <button class="btn" onclick="loadData()">Cargar Datos</button>
+            <button class="btn" onclick="clearMap()">Limpiar Mapa</button>
+            <button class="btn" onclick="getUserLocation()">📍 Mi Ubicación</button>
         </div>
-        
-        <div class="control-group">
-            <label for="limit">Límite de resultados:</label>
-            <input type="number" id="limit" value="500" min="10" max="1000">
-        </div>
-        
-        <div class="control-group">
-            <label>
-                <input type="checkbox" id="autoUpdate" checked> Actualización automática
-            </label>
-        </div>
-        
-        <div class="control-group">
-            <label>
-                <input type="checkbox" id="autoFitBounds" checked> Ajustar vista a datos
-            </label>
-        </div>
-        
-        <button class="btn" onclick="loadData()">Cargar Datos</button>
-        <button class="btn" onclick="clearMap()">Limpiar Mapa</button>
-        <button class="btn" onclick="getUserLocation()">📍 Mi Ubicación</button>
     </div>
     
     <div class="map-container">
+        <!-- Estadísticas móviles (solo visibles en móviles) -->
+        <div class="mobile-stats" id="mobile-stats">
+            <div class="mobile-stats-summary">
+                <span class="mobile-stat-item">🌳 <span id="mobile-tree-count">0</span></span>
+                <span class="mobile-stat-item">🪵 <span id="mobile-stump-count">0</span></span>
+                <span class="mobile-stat-item">📊 <span id="mobile-total-count">0</span></span>
+            </div>
+        </div>
+        
         <div id="map"></div>
         
         <div class="loading" id="loading">
