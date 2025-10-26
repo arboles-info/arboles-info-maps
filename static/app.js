@@ -10,7 +10,7 @@ let stumpLayer;
 let treeCount = 0;
 let stumpCount = 0;
 let autoUpdateEnabled = true;
-let autoFitBoundsEnabled = true;
+let autoFitBoundsEnabled = false;
 let isUpdatingBbox = false;
 let isProgrammaticMove = false;
 let loadDataButtonEnabled = true;
@@ -634,6 +634,7 @@ function initializeControlsState() {
         const toggleText = document.querySelector('.toggle-text');
         
         controls.classList.add('collapsed');
+        controls.classList.remove('expanded');
         toggleIcon.textContent = '⚙️';
         toggleText.textContent = 'Controles';
     } else {
@@ -644,6 +645,7 @@ function initializeControlsState() {
         const toggleText = document.querySelector('.toggle-text');
         
         controls.classList.add('expanded');
+        controls.classList.remove('collapsed');
         toggleIcon.textContent = '🔽';
         toggleText.textContent = 'Ocultar Controles';
     }

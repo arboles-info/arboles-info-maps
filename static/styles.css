@@ -39,7 +39,7 @@ body {
     cursor: pointer;
     font-size: 1rem;
     font-weight: 500;
-    display: flex;
+    display: none; /* Oculto por defecto */
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
@@ -71,6 +71,14 @@ body {
 .controls.collapsed {
     max-height: 0;
     opacity: 0;
+}
+
+/* En desktop, los controles siempre están expandidos */
+@media (min-width: 769px) {
+    .controls {
+        max-height: none !important;
+        opacity: 1 !important;
+    }
 }
 
 .control-group {
@@ -428,6 +436,7 @@ body {
     }
     
     .controls-toggle {
+        display: flex; /* Mostrar solo en móviles */
         padding: 1rem;
         font-size: 1.1rem;
     }
