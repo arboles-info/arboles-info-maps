@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.INFO)
 
-app = FastAPI(title="OpenTrees Web", description="Aplicación para visualizar árboles y tocones usando datos de OSM")
+app = FastAPI(title="Mapa de árboles y tocones", description="Aplicación para visualizar árboles y tocones usando datos de OSM")
 
 # Configurar archivos estáticos
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -59,7 +59,7 @@ async def query_overpass(query: str) -> dict:
     async with httpx.AsyncClient(timeout=5.0) as client:
         try:
             response = await client.post(OVERPASS_URL, data=query, headers={
-                'User-Agent': 'OpenTrees-Web/1.0'
+                'User-Agent': 'Mapa-Arboles-Tocones/1.0'
             })
             response.raise_for_status()
             return response.json()
