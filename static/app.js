@@ -640,5 +640,7 @@ function onMapMoveEnd() {
     
     if (autoUpdateEnabled && !isProgrammaticMove) {
         updateBboxFromMap();
+        // Cargar datos automáticamente después de actualizar el bbox
+        loadData();
     }
 }
