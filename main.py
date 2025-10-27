@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -110,6 +110,16 @@ async def read_index():
         return HTMLResponse(content=content)
     except FileNotFoundError:
         return HTMLResponse(content="<h1>Error: Archivo welcome.html no encontrado</h1>", status_code=404)
+
+@app.get("/robots.txt")
+async def get_robots():
+    """Endpoint que sirve el archivo robots.txt"""
+    try:
+        with open("static/robots.txt", "r", encoding="utf-8") as f:
+            content = f.read()
+        return PlainTextResponse(content=content)
+    except FileNotFoundError:
+        return PlainTextResponse(content="User-agent: *\nDisallow: /", status_code=404)
 
 @app.get("/mapa")
 async def read_map():
