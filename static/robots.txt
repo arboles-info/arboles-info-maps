@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /mapa
+Disallow: /api/
+Disallow: /static/
+
+# Allow the main page
+Allow: /
+
+# Sitemap location (if you have one)
+# Sitemap: https://yourdomain.com/sitemap.xml
