@@ -102,8 +102,18 @@ def parse_stump_element(element: dict) -> Stump:
     )
 
 @app.get("/")
-async def read_root():
-    """Endpoint raíz que sirve la página principal"""
+async def read_index():
+    """Endpoint raíz que sirve la página de índice"""
+    try:
+        with open("static/welcome.html", "r", encoding="utf-8") as f:
+            content = f.read()
+        return HTMLResponse(content=content)
+    except FileNotFoundError:
+        return HTMLResponse(content="<h1>Error: Archivo welcome.html no encontrado</h1>", status_code=404)
+
+@app.get("/mapa")
+async def read_map():
+    """Endpoint que sirve la página principal del mapa"""
     try:
         with open("static/index.html", "r", encoding="utf-8") as f:
             content = f.read()
