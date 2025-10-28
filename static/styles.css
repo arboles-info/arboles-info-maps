@@ -741,15 +741,15 @@ body {
     }
     
     .map-container {
-        height: calc(100vh - 180px);
-        margin-bottom: 70px;
+        height: calc(100vh - 150px);
+        margin-bottom: 100px;
     }
 }
 
 /* Regla específica para pantallas muy pequeñas */
 @media (max-width: 480px) {
     .map-container {
-        height: calc(100vh - 200px);
-        margin-bottom: 70px;
+        height: calc(100vh - 170px);
+        margin-bottom: 100px;
     }
 }
