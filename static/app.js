@@ -42,7 +42,9 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function initializeMap() {
     // Crear el mapa centrado en Rota (posición por defecto)
-    map = L.map('map').setView([36.627719378319, -6.3697957992555], 13);
+    map = L.map('map', {
+        zoomControl: false  // Deshabilitar controles de zoom por defecto
+    }).setView([36.627719378319, -6.3697957992555], 13);
     
     // Añadir capa de tiles de OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -52,6 +54,11 @@ function initializeMap() {
     // Crear capas para árboles y tocones
     treeLayer = L.layerGroup().addTo(map);
     stumpLayer = L.layerGroup().addTo(map);
+    
+    // Añadir control de zoom con posición personalizada
+    L.control.zoom({
+        position: 'bottomright'
+    }).addTo(map);
     
     // Event listeners para el mapa
     map.on('moveend', onMapMoveEnd);
@@ -626,29 +633,12 @@ function onMapMoveEnd() {
 function initializeControlsState() {
     const isMobile = window.innerWidth <= 768;
     
-    if (isMobile) {
-        // En móviles, los controles empiezan colapsados
-        controlsExpanded = false;
-        const controls = document.getElementById('controls');
-        const toggleIcon = document.querySelector('.toggle-icon');
-        const toggleText = document.querySelector('.toggle-text');
-        
-        controls.classList.add('collapsed');
-        controls.classList.remove('expanded');
-        toggleIcon.textContent = '⚙️';
-        toggleText.textContent = 'Controles';
-    } else {
-        // En desktop, los controles empiezan expandidos
-        controlsExpanded = true;
-        const controls = document.getElementById('controls');
-        const toggleIcon = document.querySelector('.toggle-icon');
-        const toggleText = document.querySelector('.toggle-text');
-        
-        controls.classList.add('expanded');
-        controls.classList.remove('collapsed');
-        toggleIcon.textContent = '🔽';
-        toggleText.textContent = 'Ocultar Controles';
-    }
+    // En ambos casos (móvil y desktop), los controles empiezan colapsados
+    controlsExpanded = false;
+    const controls = document.getElementById('controls');
+    
+    controls.classList.add('hide');
+    controls.classList.remove('show');
 }
 
 /**
@@ -656,20 +646,47 @@ function initializeControlsState() {
  */
 function toggleControls() {
     const controls = document.getElementById('controls');
-    const toggleIcon = document.querySelector('.toggle-icon');
-    const toggleText = document.querySelector('.toggle-text');
+    const hamburgerBtn = document.getElementById('hamburger-btn');
     
     controlsExpanded = !controlsExpanded;
     
     if (controlsExpanded) {
-        controls.classList.add('expanded');
-        controls.classList.remove('collapsed');
-        toggleIcon.textContent = '🔽';
-        toggleText.textContent = 'Ocultar Controles';
+        controls.classList.add('show');
+        controls.classList.remove('hide');
+        hamburgerBtn.classList.add('active');
     } else {
-        controls.classList.add('collapsed');
-        controls.classList.remove('expanded');
-        toggleIcon.textContent = '⚙️';
-        toggleText.textContent = 'Controles';
+        controls.classList.add('hide');
+        controls.classList.remove('show');
+        hamburgerBtn.classList.remove('active');
     }
 }
+
+/**
+ * Navegar a la página principal
+ */
+function goToWelcome() {
+    window.location.href = '/';
+}
+
+/**
+ * Cerrar menú al hacer clic fuera de él
+ */
+document.addEventListener('click', function(event) {
+    const controls = document.getElementById('controls');
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    
+    if (controlsExpanded && 
+        !controls.contains(event.target) && 
+        !hamburgerBtn.contains(event.target)) {
+        toggleControls();
+    }
+});
+
+/**
+ * Cerrar menú con tecla Escape
+ */
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape' && controlsExpanded) {
+        toggleControls();
+    }
+});

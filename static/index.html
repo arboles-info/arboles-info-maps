@@ -18,17 +18,25 @@
 </head>
 <body>
     <div class="header">
-        <h1>🌳 Mapa de árboles y tocones</h1>
-        <p>Este mapa utiliza datos de OpenStreetMap <a href="https://www.openstreetmap.org/about" target="_blank" rel="noopener noreferrer">🔗</a></p>
+        <div class="header-content">
+            <div class="header-left">
+                <h1 onclick="goToWelcome()" class="clickable-title" title="Ir a la página principal">
+                    🌳 Árboles Info Maps
+                    <span class="info-icon">ℹ️</span>
+                </h1>
+            </div>
+        </div>
     </div>
     
-    <div class="controls-container">
-        <button class="controls-toggle" onclick="toggleControls()">
-            <span class="toggle-icon">⚙️</span>
-            <span class="toggle-text">Controles</span>
-        </button>
-        
-        <div class="controls" id="controls">
+    <div class="page-container">
+        <div class="controls-container">
+            <button class="hamburger-menu" onclick="toggleControls()" id="hamburger-btn">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+            
+            <div class="controls" id="controls">
             <div class="control-group">
                 <label for="bbox">Área (lat,lon,lat,lon):</label>
                 <input type="text" id="bbox" placeholder="36.613770852449,-6.410994529724,36.641667904189,-6.328597068787" value="36.613770852449,-6.410994529724,36.641667904189,-6.328597068787">
@@ -103,6 +111,11 @@
             </div>
         </div>
     </div>
+    </div>
+
+    <footer class="footer">
+        <!-- Footer vacío por ahora -->
+    </footer>
 
     <!-- Leaflet JavaScript -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
