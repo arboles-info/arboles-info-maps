@@ -23,7 +23,7 @@ http_service:
 
   # Build configuration
   build_command: pip install --upgrade pip && pip install -r requirements.txt
-  run_command: uvicorn main:app --host 0.0.0.0 --port $PORT
+  run_command: uvicorn src.main:app --host 0.0.0.0 --port $PORT
 
   # Variables de entorno
   envs:

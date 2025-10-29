@@ -3,6 +3,9 @@
  * Visualizador de árboles y tocones usando datos de OpenStreetMap
  */
 
+// Contenido movido desde static/app.js
+// Nota: las rutas a /api y /static permanecen igual
+
 // Variables globales
 let map;
 let treeLayer;
@@ -425,12 +428,38 @@ async function loadData() {
         
     } catch (error) {
         console.error('Error al cargar datos:', error);
-        alert('Error al cargar los datos. Por favor, inténtalo de nuevo.');
+        showErrorCard('Error al cargar los datos. Por favor, inténtalo de nuevo.');
         // En caso de error, habilitar el botón para permitir reintento
         setLoadDataButtonState(true);
     } finally {
         showLoading(false);
     }
+}
+
+/**
+ * Mostrar una tarjeta de error temporal
+ * @param {string} message - Mensaje a mostrar
+ * @param {number} duration - Duración en ms (por defecto 2000)
+ */
+function showErrorCard(message, duration = 2000) {
+    const card = document.createElement('div');
+    card.className = 'error-card';
+    card.textContent = message;
+    document.body.appendChild(card);
+
+    // Forzar reflujo para activar transición si aplica
+    // eslint-disable-next-line no-unused-expressions
+    card.offsetHeight;
+
+    // Ocultar y eliminar tras duración
+    setTimeout(() => {
+        card.classList.add('hide');
+        setTimeout(() => {
+            if (card && card.parentNode) {
+                card.parentNode.removeChild(card);
+            }
+        }, 300);
+    }, duration);
 }
 
 /**
@@ -690,3 +719,5 @@ document.addEventListener('keydown', function(event) {
         toggleControls();
     }
 });
+
+

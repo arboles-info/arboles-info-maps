@@ -8,3 +8,4 @@ Allow: /
 
 # Sitemap location (if you have one)
 # Sitemap: https://yourdomain.com/sitemap.xml
+

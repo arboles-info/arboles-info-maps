@@ -11,7 +11,7 @@ VENV_DEV := venv
 VENV_BIN := $(VENV_DEV)/bin
 PIP_DEV := $(VENV_BIN)/pip
 PYTHON_VENV := $(VENV_BIN)/python
-APP := main.py
+APP := src/main.py
 HOST := 0.0.0.0
 PORT := 8000
 
@@ -197,9 +197,9 @@ dev: check-app-deps ## Levantar la aplicación en modo desarrollo
 		UVICORN_CMD="uvicorn"; \
 	fi; \
 	if command -v $$UVICORN_CMD >/dev/null 2>&1; then \
-		$$UVICORN_CMD main:app --host $(HOST) --port $(PORT) --reload; \
-	elif $$PYTHON_CMD -c "import uvicorn" 2>/dev/null; then \
-		$$PYTHON_CMD -m uvicorn main:app --host $(HOST) --port $(PORT) --reload; \
+    		$$UVICORN_CMD src.main:app --host $(HOST) --port $(PORT) --reload; \
+    	elif $$PYTHON_CMD -c "import uvicorn" 2>/dev/null; then \
+    		$$PYTHON_CMD -m uvicorn src.main:app --host $(HOST) --port $(PORT) --reload; \
 	else \
 		echo "$(RED)❌ Uvicorn no encontrado para modo desarrollo$(NC)"; \
 		echo "$(YELLOW)Usando modo normal...$(NC)"; \
