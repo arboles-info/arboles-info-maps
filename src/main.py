@@ -26,8 +26,8 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Mapa de árboles y tocones", description="Aplicación para visualizar árboles y tocones usando datos de OSM")
 
 # Rutas de archivos basadas en la ubicación de este archivo
-BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "static"
+HERE = Path(__file__).resolve().parent
+STATIC_DIR = HERE / "static"
 
 # Configurar archivos estáticos
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
