@@ -112,9 +112,6 @@ Obtiene tocones de OSM en un área específica.
 - `species` (opcional): Filtrar por especie específica
 - `limit` (opcional): Número máximo de resultados (default: 100)
 
-### GET /api/species
-Obtiene lista de especies disponibles en OSM.
-
 ## Estructura del Proyecto
 
 ```
