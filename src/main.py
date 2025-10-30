@@ -132,8 +132,12 @@ async def query_overpass(query: str) -> dict:
         raise HTTPException(status_code=504, detail="Timeout al consultar Overpass API")
     except httpx.HTTPStatusError as e:
         total_time = time.time() - start_time
-        logger.error(f"Error HTTP {e.response.status_code} consultando Overpass API en {total_time:.2f}s. Response: {e.response.text[:200]}")
-        raise HTTPException(status_code=502, detail=f"Error HTTP {e.response.status_code} al consultar Overpass API")
+        status_code = e.response.status_code
+        logger.error(f"Error HTTP {status_code} consultando Overpass API en {total_time:.2f}s. Response: {e.response.text[:200]}")
+        # Preservar 504 para permitir reintentos aguas arriba
+        if status_code == 504:
+            raise HTTPException(status_code=504, detail="Gateway Timeout desde Overpass API")
+        raise HTTPException(status_code=502, detail=f"Error HTTP {status_code} al consultar Overpass API")
     except httpx.RequestError as e:
         total_time = time.time() - start_time
         logger.error(f"Error de conexión consultando Overpass API en {total_time:.2f}s: {str(e)}")
@@ -171,6 +175,27 @@ def parse_stump_element(element: dict) -> Stump:
         removal_date=datetime.now(),  # OSM no suele tener esta info
         reason=tags.get("removal_reason")
     )
+
+async def query_overpass_with_retry(query: str, max_retries: int = 2, initial_delay: float = 1.5, backoff_factor: float = 2.0) -> dict:
+    """Ejecuta la consulta a Overpass con reintentos en caso de 504 (timeout gateway o cliente).
+
+    - Reintenta solo ante HTTPException con status 504
+    - Backoff exponencial entre intentos
+    """
+    attempt = 0
+    delay = initial_delay
+    while True:
+        try:
+            return await query_overpass(query)
+        except HTTPException as exc:
+            if exc.status_code == 504 and attempt < max_retries:
+                attempt += 1
+                logger.warning(f"Intento {attempt}/{max_retries} tras 504 de Overpass. Reintentando en {delay:.1f}s")
+                await asyncio.sleep(delay)
+                delay *= backoff_factor
+                continue
+            # No es 504 o se agotaron los reintentos
+            raise
 
 @app.get("/", include_in_schema=False)
 async def read_index():
@@ -253,7 +278,7 @@ async def get_trees(
         query_start = time.time()
         
         try:
-            result = await query_overpass(query)
+            result = await query_overpass_with_retry(query)
             query_time = time.time() - query_start
             logger.info(f"Consulta Overpass completada en {query_time:.2f}s")
             
@@ -300,6 +325,7 @@ async def get_trees(
     except Exception as e:
         total_time = time.time() - start_time
         logger.error("Error happened in parsing bbox in /api/trees")
+        logger.error(f"Error: {str(e)}")
         logger.error(f"Error parsing bbox: {str(e)}. Tiempo total: {total_time:.2f}s")
         raise HTTPException(status_code=400, detail=f"Error en formato de bbox: {str(e)}")
 
@@ -367,7 +393,7 @@ async def get_stumps(
         query_start = time.time()
         
         try:
-            result = await query_overpass(query)
+            result = await query_overpass_with_retry(query)
             query_time = time.time() - query_start
             logger.info(f"Consulta Overpass completada en {query_time:.2f}s")
             
