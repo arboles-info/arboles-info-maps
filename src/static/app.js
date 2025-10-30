@@ -377,9 +377,38 @@ async function loadData() {
             fetch(`/api/trees?${params}`),
             fetch(`/api/stumps?${params}`)
         ]);
-        
-        const trees = await treesResponse.json();
-        const stumps = await stumpsResponse.json();
+
+        // Manejo explícito de errores HTTP antes de parsear JSON
+        const readError = async (resp) => {
+            try {
+                const data = await resp.json();
+                if (data && typeof data === 'object') {
+                    return data.detail || JSON.stringify(data);
+                }
+                return String(data);
+            } catch (_) {
+                try {
+                    return await resp.text();
+                } catch (__){
+                    return 'Respuesta no legible';
+                }
+            }
+        };
+
+        if (!treesResponse.ok) {
+            const detail = await readError(treesResponse);
+            throw new Error(`Error árboles (${treesResponse.status}): ${detail}`);
+        }
+        if (!stumpsResponse.ok) {
+            const detail = await readError(stumpsResponse);
+            throw new Error(`Error tocones (${stumpsResponse.status}): ${detail}`);
+        }
+
+        const treesRaw = await treesResponse.json();
+        const stumpsRaw = await stumpsResponse.json();
+
+        const trees = Array.isArray(treesRaw) ? treesRaw : [];
+        const stumps = Array.isArray(stumpsRaw) ? stumpsRaw : [];
         
         // Almacenar datos de árboles y añadir al mapa
         treesData = trees;
@@ -429,10 +458,10 @@ async function loadData() {
     } catch (error) {
         console.error('Error al cargar datos:', error);
         showErrorCard('Error al cargar los datos. Por favor, inténtalo de nuevo.');
-        // En caso de error, habilitar el botón para permitir reintento
-        setLoadDataButtonState(true);
     } finally {
         showLoading(false);
+        // Rehabilitar el botón siempre al finalizar
+        setLoadDataButtonState(true);
     }
 }
 
