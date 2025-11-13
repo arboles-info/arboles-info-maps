@@ -1,0 +1,150 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate-and-tag:
+    name: Validate Commit and Create Tag with Commitizen
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0  # Necesario para obtener el historial completo de commits
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Skip if bump commit or [skip ci]
+      id: skip
+      run: |
+        COMMIT_MSG=$(git log -1 --pretty=%B)
+        if echo "$COMMIT_MSG" | grep -qE '^chore\(release\):.*bump version|\[skip ci\]|\[ci skip\]'; then
+          echo "⏭️ Commit de bump de versión o [skip ci] detectado, saltando workflow"
+          echo "skip=true" >> $GITHUB_OUTPUT
+        else
+          echo "skip=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Set up Python
+      if: steps.skip.outputs.skip != 'true'
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.13'
+    
+    - name: Install Commitizen
+      if: steps.skip.outputs.skip != 'true'
+      run: |
+        python -m pip install --upgrade pip
+        pip install commitizen
+    
+    - name: Validate commit message
+      if: steps.skip.outputs.skip != 'true'
+      id: validate
+      run: |
+        COMMIT_MSG=$(git log -1 --pretty=%B)
+        echo "Validando commit message: $COMMIT_MSG"
+        
+        # Crear archivo temporal con el mensaje del commit
+        echo "$COMMIT_MSG" > /tmp/commit_msg.txt
+        
+        # Validar el último commit usando commitizen
+        cz check --commit-msg-file /tmp/commit_msg.txt || {
+          echo "❌ Commit message no sigue Conventional Commits"
+          echo "Formato esperado: <type>(<scope>): <subject>"
+          echo "Tipos válidos: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+          echo "Ejemplo: feat(api): add new endpoint"
+          exit 1
+        }
+        
+        echo "✅ Commit message válido"
+        echo "valid=true" >> $GITHUB_OUTPUT
+    
+    - name: Get current version
+      if: steps.skip.outputs.skip != 'true'
+      id: current_version
+      run: |
+        # Obtener el último tag semántico
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
+        echo "Last tag: $LAST_TAG"
+        echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+    
+    - name: Bump version and create tag
+      if: steps.skip.outputs.skip != 'true'
+      id: bump
+      run: |
+        # Configurar git para commits
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # Obtener versión actual antes del bump
+        OLD_VERSION=$(cz version --project 2>/dev/null || echo "0.0.0")
+        echo "Versión actual: $OLD_VERSION"
+        echo "old_version=$OLD_VERSION" >> $GITHUB_OUTPUT
+        
+        # Ejecutar bump de versión
+        # --yes para no interactuar, --changelog para generar changelog
+        cz bump --yes --changelog || {
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 3 ]; then
+            echo "⚠️ No hay cambios que requieran bump de versión"
+            echo "bumped=false" >> $GITHUB_OUTPUT
+            exit 0
+          else
+            echo "❌ Error al hacer bump de versión"
+            exit $EXIT_CODE
+          fi
+        }
+        
+        # Obtener nueva versión
+        NEW_VERSION=$(cz version --project)
+        NEW_TAG="v$NEW_VERSION"
+        
+        echo "Nueva versión: $NEW_VERSION"
+        echo "Nuevo tag: $NEW_TAG"
+        echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+        echo "bumped=true" >> $GITHUB_OUTPUT
+    
+    - name: Push tag and changes
+      if: steps.bump.outputs.bumped == 'true' && steps.skip.outputs.skip != 'true'
+      run: |
+        NEW_TAG="${{ steps.bump.outputs.new_tag }}"
+        
+        # Pushear el tag
+        git push origin "$NEW_TAG"
+        
+        # Si hay cambios en archivos (como CHANGELOG.md), pushearlos también
+        # Nota: cz bump ya crea el commit, solo necesitamos pushearlo
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "Hay cambios sin commitear, esto no debería pasar"
+          git status
+        fi
+        
+        # Verificar si hay commits locales (el commit de bump creado por cz bump)
+        if [ "$(git rev-list --count HEAD ^origin/main)" -gt 0 ]; then
+          echo "Pusheando commit de bump de versión..."
+          git push origin main
+        fi
+        
+        echo "✅ Tag $NEW_TAG creado y pusheado exitosamente"
+    
+    - name: Summary
+      if: always()
+      run: |
+        echo "## 📋 Resumen de Release" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Último tag anterior**: ${{ steps.current_version.outputs.last_tag }}" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ steps.bump.outputs.bumped }}" == "true" ]; then
+          echo "- **Nueva versión**: ${{ steps.bump.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Nuevo tag**: ${{ steps.bump.outputs.new_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Estado**: ✅ Versión actualizada y tag creado exitosamente" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- **Estado**: ℹ️ No se requirió bump de versión" >> $GITHUB_STEP_SUMMARY
+        fi
+
