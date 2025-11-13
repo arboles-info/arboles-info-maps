@@ -23,11 +23,9 @@ Significa que la rama `main` está protegida y el token `GITHUB_TOKEN` no tiene 
 
 ### 2. Permitir Bypass para GitHub Actions
 
-Para permitir que GitHub Actions haga push a `main`:
+**⚠️ IMPORTANTE:** `github-actions[bot]` **NO aparece** en la lista de usuarios/equipos que pueden ser añadidos a las excepciones de las reglas de protección de rama. Esto es porque `github-actions[bot]` no es un usuario o equipo tradicional, sino una cuenta de servicio interna de GitHub.
 
-1. En la regla de protección de `main`, busca la sección **"Allow specified actors to bypass required pull requests"**
-2. Agrega `github-actions[bot]` a la lista de actores permitidos
-3. Guarda los cambios
+**Solución:** Debes usar un **Personal Access Token (PAT)** asociado a una cuenta de usuario con permisos adecuados. Ver la sección "Opción 1" más abajo.
 
 ### 3. Verificar Permisos del Workflow
 
@@ -40,18 +38,37 @@ permissions:
 
 ## Soluciones Alternativas
 
-### Opción 1: Usar Personal Access Token (PAT)
+### Opción 1: Usar Personal Access Token (PAT) ⭐ RECOMENDADO
 
-1. Crea un PAT con permisos `repo` (full control)
-2. Agrega el PAT como secret en GitHub: `Settings → Secrets and variables → Actions → New repository secret`
-3. Nombre del secret: `RELEASE_TOKEN`
-4. Modifica el workflow para usar el PAT:
-   ```yaml
-   - name: Checkout repository
-     uses: actions/checkout@v5
-     with:
-       token: ${{ secrets.RELEASE_TOKEN }}
-   ```
+Esta es la solución recomendada por GitHub cuando `github-actions[bot]` no puede ser añadido al bypass.
+
+#### Pasos para implementar:
+
+1. **Crear un Personal Access Token (PAT):**
+   - Ve a: https://github.com/settings/tokens
+   - Haz clic en "Generate new token" → "Generate new token (classic)"
+   - Asigna un nombre descriptivo (ej: `arboles-info-maps-release`)
+   - Selecciona los permisos necesarios:
+     - ✅ `repo` (Full control of private repositories) - Esto incluye permisos para hacer push a ramas protegidas
+   - Haz clic en "Generate token"
+   - **⚠️ IMPORTANTE:** Copia el token inmediatamente, no podrás verlo de nuevo
+
+2. **Agregar el PAT como secret en el repositorio:**
+   - Ve a: `https://github.com/arboles-info/arboles-info-webpage/settings/secrets/actions`
+   - Haz clic en "New repository secret"
+   - Nombre: `RELEASE_TOKEN`
+   - Valor: Pega el PAT que copiaste
+   - Haz clic en "Add secret"
+
+3. **El workflow ya está configurado para usar el PAT:**
+   - El workflow usa `${{ secrets.RELEASE_TOKEN }}` si está disponible
+   - Si no está disponible, usa `${{ secrets.GITHUB_TOKEN }}` como fallback
+   - Con el PAT, las operaciones se ejecutarán con los permisos de la cuenta asociada al PAT
+
+#### Notas de seguridad:
+- El PAT debe pertenecer a una cuenta con permisos de escritura en el repositorio
+- El PAT otorga los permisos de la cuenta asociada, así que asegúrate de que la cuenta tenga solo los permisos necesarios
+- Nunca expongas el PAT en logs o código público
 
 ### Opción 2: No Pushear el Commit de Bump
 
