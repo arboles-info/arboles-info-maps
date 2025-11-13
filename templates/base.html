@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Árboles Info Maps{% endblock %}</title>
+    
+    <!-- Favicon con emoji de árbol -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌳</text></svg>">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    
+    <!-- Estilos base -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header reutilizable -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1 onclick="goToWelcome()" class="clickable-title" title="Ir a la página principal">
+                    🌳 Árboles Info Maps
+                    <span class="info-icon">ℹ️</span>
+                </h1>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Contenido principal -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer reutilizable -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; {% now "Y" %} Árboles Info Maps - Proyecto Open Source</p>
+            <p>
+                <a href="https://github.com/arboles-info/arboles-info-webpage" target="_blank" rel="noopener noreferrer" style="color: white; text-decoration: underline;">
+                    Ver en GitHub
+                </a>
+                | 
+                <a href="https://www.openstreetmap.org/" target="_blank" rel="noopener noreferrer" style="color: white; text-decoration: underline;">
+                    OpenStreetMap
+                </a>
+            </p>
+            <p style="font-size: 0.9rem; opacity: 0.9;">
+                Datos proporcionados por la comunidad de OpenStreetMap
+            </p>
+        </div>
+    </footer>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Script común para navegación -->
+    <script>
+        function goToWelcome() {
+            window.location.href = '{% url "maps:welcome" %}';
+        }
+    </script>
+</body>
+</html>
+

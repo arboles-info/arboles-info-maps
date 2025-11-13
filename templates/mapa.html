@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mapa de árboles y tocones - Visualizador de Árboles y Tocones{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="controls-container">
+        <button class="hamburger-menu" onclick="toggleControls()" id="hamburger-btn">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+        
+        <div class="controls" id="controls">
+        <div class="control-group">
+            <label for="bbox">Área (lat,lon,lat,lon):</label>
+            <input type="text" id="bbox" placeholder="36.613770852449,-6.410994529724,36.641667904189,-6.328597068787" value="36.613770852449,-6.410994529724,36.641667904189,-6.328597068787">
+        </div>
+        
+        <div class="control-group">
+            <label for="limit">Límite de resultados:</label>
+            <input type="number" id="limit" value="500" min="10" max="1000">
+        </div>
+        
+        <div class="control-group">
+            <label>
+                <input type="checkbox" id="autoUpdate" checked> Actualización automática
+            </label>
+        </div>
+        
+        <div class="control-group">
+            <label>
+                <input type="checkbox" id="autoFitBounds"> Ajustar vista a datos
+            </label>
+        </div>
+        
+        <button class="btn" onclick="loadData()">Cargar Datos</button>
+        <button class="btn" onclick="clearMap()">Limpiar Mapa</button>
+        <button class="btn" onclick="getUserLocation()">📍 Mi Ubicación</button>
+    </div>
+</div>
+
+<div class="map-container">
+    <!-- Estadísticas móviles (solo visibles en móviles) -->
+    <div class="mobile-stats" id="mobile-stats">
+        <div class="mobile-stats-summary">
+            <span class="mobile-stat-item">🌳 <span id="mobile-tree-count">0</span></span>
+            <span class="mobile-stat-item">🪵 <span id="mobile-stump-count">0</span></span>
+            <span class="mobile-stat-item">📊 <span id="mobile-total-count">0</span></span>
+        </div>
+    </div>
+    
+    <div id="map"></div>
+    
+    <div class="loading" id="loading">
+        <p>Cargando datos de OpenStreetMap...</p>
+    </div>
+    
+    <div class="stats" id="stats">
+        <h3>Estadísticas</h3>
+        <div class="stats-summary">
+            <p>Árboles: <span id="tree-count">0</span></p>
+            <p>Tocones: <span id="stump-count">0</span></p>
+            <p>Total: <span id="total-count">0</span></p>
+        </div>
+        
+        <div class="stats-breakdown" id="stats-breakdown">
+            <h4>Árboles por Especie</h4>
+            <div class="species-list" id="species-list">
+                <p class="no-data">No hay datos cargados</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="legend">
+        <h3>Leyenda</h3>
+        <div class="legend-item clickable" id="legend-trees" data-layer="trees">
+            <div class="legend-color tree-color"></div>
+            <span>Árboles</span>
+            <span class="toggle-indicator">👁️</span>
+        </div>
+        <div class="legend-item clickable" id="legend-stumps" data-layer="stumps">
+            <div class="legend-color stump-color"></div>
+            <span>Tocones</span>
+            <span class="toggle-indicator">👁️</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Aplicación JavaScript -->
+<script src="{% static 'js/app.js' %}"></script>
+{% endblock %}
+
+

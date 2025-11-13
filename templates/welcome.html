@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Árboles Info Maps{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+    }
+    
+    /* El header y footer siempre ocupan el 100% del ancho */
+    .header,
+    .footer {
+        width: 100vw;
+        margin-left: calc(-50vw + 50%);
+        position: relative;
+    }
+    
+    /* Asegurar que el header mantenga sus estilos base */
+    .header .clickable-title,
+    header .clickable-title {
+        color: white !important;
+        font-size: 2rem !important;
+        font-weight: 300 !important;
+    }
+    
+    /* Asegurar que ningún estilo de h1 afecte al header */
+    .header h1,
+    header h1 {
+        color: white !important;
+        margin: 0 !important;
+        text-align: inherit !important;
+    }
+    
+    /* El contenido principal tiene max-width */
+    main {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .container {
+        background: white;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin: 2rem auto;
+    }
+    
+    /* Estilos solo para h1 dentro del container, no para el header */
+    .container h1 {
+        color: #2c5530;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .description {
+        font-size: 18px;
+        line-height: 1.6;
+        color: #666;
+        margin-bottom: 30px;
+    }
+    .button {
+        display: inline-block;
+        background-color: #4CAF50;
+        color: white;
+        padding: 15px 30px;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 18px;
+        text-align: center;
+        transition: background-color 0.3s;
+    }
+    .button:hover {
+        background-color: #45a049;
+    }
+    .button-container {
+        text-align: center;
+        margin: 30px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+    }
+    .button-container .button {
+        width: 100%;
+        max-width: 280px;
+        box-sizing: border-box;
+    }
+    .features {
+        margin-top: 30px;
+    }
+    .feature {
+        margin: 15px 0;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-left: 4px solid #4CAF50;
+    }
+    
+    /* Responsive design for mobile */
+    @media (min-width: 768px) {
+        .button-container {
+            flex-direction: row;
+            justify-content: center;
+            gap: 15px;
+        }
+        .button-container .button {
+            width: auto;
+            max-width: none;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .container {
+            padding: 20px;
+        }
+        .button {
+            padding: 12px 20px;
+            font-size: 16px;
+        }
+        .container h1 {
+            font-size: 1.8rem;
+        }
+        .description {
+            font-size: 16px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Open Data, árboles y tocones</h1>
+    <div class="description">
+        <p><strong>Proyecto Open Source</strong> para visualizar árboles y tocones utilizando datos de <a href="https://www.openstreetmap.org/" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> a través de la API de Overpass.</p>
+        
+        <p>Esta aplicación web permite explorar la información de especies, ubicaciones y características de los árboles en cualquier área geográfica, contribuyendo al conocimiento y conservación del patrimonio arbóreo urbano y natural.</p>
+    </div>
+    
+    <div class="button-container">
+        <a href="{% url 'maps:mapa' %}" class="button">Explorar Mapa</a>
+        <a href="https://github.com/arboles-info/arboles-info-webpage" target="_blank" rel="noopener noreferrer" class="button" style="background-color: #333;">Ver en GitHub</a>
+    </div>
+    
+    <div class="features">
+        <h3>🌍 ¿Qué puedes hacer con esta herramienta?</h3>
+        <div class="feature">
+            <strong>🗺️ Explorar tu entorno:</strong> Descubre los árboles y tocones de tu barrio, ciudad o cualquier lugar del mundo
+        </div>
+        <div class="feature">
+            <strong>🌲 Conocer la diversidad arbórea:</strong> Identifica especies, edades, tamaños y estado de salud de los árboles en tu área
+        </div>
+        <div class="feature">
+            <strong>🪵 Rastrear cambios urbanos:</strong> Observa dónde se han talado árboles y analiza patrones de gestión forestal urbana
+        </div>
+        <div class="feature">
+            <strong>📊 Analizar patrones:</strong> Visualiza estadísticas y distribuciones de especies por zonas geográficas
+        </div>
+        <div class="feature">
+            <strong>🔍 Investigar áreas específicas:</strong> Filtra por especies, zonas o características particulares que te interesen
+        </div>
+    </div>
+    
+    <div class="features" style="margin-top: 40px;">
+        <h3>🤝 Carácter Colaborativo de la Herramienta</h3>
+        <div class="feature">
+            <strong>🌍 Datos de la comunidad:</strong> Toda la información proviene de voluntarios que mapean árboles en OpenStreetMap
+        </div>
+        <div class="feature">
+            <strong>🔄 Información actualizada:</strong> Los datos se actualizan constantemente gracias a la contribución de mapeadores de todo el mundo
+        </div>
+        <div class="feature">
+            <strong>📈 Crecimiento continuo:</strong> Cada día se añaden nuevos árboles y tocones al mapa global
+        </div>
+        <div class="feature">
+            <strong>🌱 Conciencia ambiental:</strong> La herramienta fomenta el conocimiento y cuidado del patrimonio arbóreo urbano
+        </div>
+    </div>
+    
+    <div class="features" style="margin-top: 40px; background-color: #f0f8ff; border-left: 4px solid #0066cc;">
+        <h3>🌱 Únete al Mapeo Colaborativo</h3>
+        <p>Esta herramienta es posible gracias a una <strong>comunidad global de mapeadores</strong> que contribuyen voluntariamente a documentar el patrimonio arbóreo mundial. Tú también puedes formar parte:</p>
+        <ul style="margin: 15px 0; padding-left: 20px;">
+            <li><strong>Mapea árboles en tu zona:</strong> Añade árboles y tocones de tu barrio o ciudad a OpenStreetMap</li>
+            <li><strong>Actualiza información existente:</strong> Mejora los datos de especies, altura, diámetro o estado de salud</li>
+            <li><strong>Documenta cambios:</strong> Registra cuando se talan árboles o se plantan nuevos</li>
+            <li><strong>Comparte conocimiento:</strong> Ayuda a otros a identificar especies o características de árboles</li>
+            <li><strong>Difunde la herramienta:</strong> Comparte esta plataforma con organizaciones ambientales y ciudadanos interesados</li>
+        </ul>
+        <p>Visita nuestro <a href="https://github.com/arboles-info/arboles-info-webpage" target="_blank" rel="noopener noreferrer">repositorio en GitHub</a> para conocer más sobre el proyecto y cómo contribuir al desarrollo de la herramienta.</p>
+    </div>
+</div>
+{% endblock %}
+
