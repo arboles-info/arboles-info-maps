@@ -82,6 +82,16 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         
+        # Verificar si hay tags existentes
+        if ! git describe --tags --abbrev=0 >/dev/null 2>&1; then
+          echo "No hay tags existentes, creando tag inicial v0.0.0..."
+          # Crear tag inicial en el primer commit
+          FIRST_COMMIT=$(git rev-list --max-parents=0 HEAD)
+          git tag -a "v0.0.0" -m "chore(release): initial version" "$FIRST_COMMIT"
+          git push origin "v0.0.0"
+          echo "Tag inicial v0.0.0 creado"
+        fi
+        
         # Obtener versión actual antes del bump
         OLD_VERSION=$(cz version --project 2>/dev/null || echo "0.0.0")
         echo "Versión actual: $OLD_VERSION"

@@ -12,6 +12,6 @@ bump_message = """chore(release): bump version $current_version → $new_version
 update_changelog_on_bump = true
 changelog_file = "CHANGELOG.md"
 changelog_incremental = true
-changelog_start_rev = "v0.0.0"
+# changelog_start_rev se calculará automáticamente desde el primer commit si no hay tags
 major_version_zero = true
 
