@@ -280,7 +280,7 @@ async def get_trees(request: HttpRequest):
             total_time = time.time() - start_time
             logger.error("Error happened in /api/trees")
             logger.error(f"Error: {str(e)}. Tiempo total: {total_time:.2f}s")
-            return JsonResponse({'error': f'Error interno del servidor: {str(e)}'}, status=500)
+            return JsonResponse({'error': 'Error interno del servidor.'}, status=500)
     
     except Exception as e:
         total_time = time.time() - start_time
