@@ -185,3 +185,4 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 - [Overpass API](https://overpass-api.de/) por la API de consulta
 - [Leaflet](https://leafletjs.com/) por la librería de mapas
 - [FastAPI](https://fastapi.tiangolo.com/) por el framework web
+

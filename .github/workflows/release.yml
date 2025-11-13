@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:  # Permite ejecutar manualmente desde la UI de GitHub
 
 jobs:
   validate-and-tag:
@@ -18,17 +19,25 @@ jobs:
       uses: actions/checkout@v5
       with:
         fetch-depth: 0  # Necesario para obtener el historial completo de commits
-        token: ${{ secrets.GITHUB_TOKEN }}
+        # Usar PAT si está disponible (necesario para ramas protegidas), sino usar GITHUB_TOKEN
+        token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
     
     - name: Skip if bump commit or [skip ci]
       id: skip
       run: |
-        COMMIT_MSG=$(git log -1 --pretty=%B)
-        if echo "$COMMIT_MSG" | grep -qE '^chore\(release\):.*bump version|\[skip ci\]|\[ci skip\]'; then
-          echo "⏭️ Commit de bump de versión o [skip ci] detectado, saltando workflow"
-          echo "skip=true" >> $GITHUB_OUTPUT
-        else
+        # Si se ejecuta manualmente (workflow_dispatch), no saltar
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "Ejecución manual detectada, procesando último commit en main"
           echo "skip=false" >> $GITHUB_OUTPUT
+        else
+          # En ejecución automática, verificar si el commit es de bump
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          if echo "$COMMIT_MSG" | grep -qE '^chore\(release\):.*bump version|\[skip ci\]|\[ci skip\]'; then
+            echo "⏭️ Commit de bump de versión o [skip ci] detectado, saltando workflow"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
         fi
     
     - name: Set up Python
@@ -82,6 +91,23 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         
+        # Configurar credenciales para git push (necesario si usamos PAT)
+        RELEASE_TOKEN="${{ secrets.RELEASE_TOKEN }}"
+        if [ -n "$RELEASE_TOKEN" ]; then
+          echo "Usando PAT para autenticación"
+          git remote set-url origin https://x-access-token:$RELEASE_TOKEN@github.com/${{ github.repository }}.git
+        fi
+        
+        # Verificar si hay tags existentes
+        if ! git describe --tags --abbrev=0 >/dev/null 2>&1; then
+          echo "No hay tags existentes, creando tag inicial v0.0.0..."
+          # Crear tag inicial en el primer commit
+          FIRST_COMMIT=$(git rev-list --max-parents=0 HEAD)
+          git tag -a "v0.0.0" -m "chore(release): initial version" "$FIRST_COMMIT"
+          git push origin "v0.0.0"
+          echo "Tag inicial v0.0.0 creado"
+        fi
+        
         # Obtener versión actual antes del bump
         OLD_VERSION=$(cz version --project 2>/dev/null || echo "0.0.0")
         echo "Versión actual: $OLD_VERSION"
@@ -116,20 +142,24 @@ jobs:
       run: |
         NEW_TAG="${{ steps.bump.outputs.new_tag }}"
         
-        # Pushear el tag
+        # Pushear el tag (esto funciona porque los tags no están protegidos)
+        echo "Pusheando tag $NEW_TAG..."
         git push origin "$NEW_TAG"
         
-        # Si hay cambios en archivos (como CHANGELOG.md), pushearlos también
-        # Nota: cz bump ya crea el commit, solo necesitamos pushearlo
-        if [ -n "$(git status --porcelain)" ]; then
-          echo "Hay cambios sin commitear, esto no debería pasar"
-          git status
-        fi
-        
-        # Verificar si hay commits locales (el commit de bump creado por cz bump)
+        # Intentar pushear el commit de bump de versión
+        # Nota: Esto puede fallar si la rama está protegida, pero el tag ya está pusheado
         if [ "$(git rev-list --count HEAD ^origin/main)" -gt 0 ]; then
-          echo "Pusheando commit de bump de versión..."
-          git push origin main
+          echo "Intentando pushear commit de bump de versión..."
+          if git push origin main 2>&1; then
+            echo "✅ Commit de bump pusheado exitosamente"
+          else
+            echo "⚠️ No se pudo pushear el commit de bump (rama protegida)"
+            echo "El tag $NEW_TAG fue creado exitosamente, pero el commit de bump no se pudo pushear."
+            echo "Para resolver esto:"
+            echo "1. Configura un Personal Access Token (PAT) con permisos de escritura"
+            echo "2. O permite que 'github-actions[bot]' haga bypass en las reglas de protección"
+            echo "3. O haz push manual del commit de bump desde tu máquina local"
+          fi
         fi
         
         echo "✅ Tag $NEW_TAG creado y pusheado exitosamente"
