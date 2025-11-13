@@ -11,6 +11,7 @@ urlpatterns = [
     path('mapa/', views.mapa, name='mapa'),
     path('api/trees/', views.get_trees, name='api_trees'),
     path('api/stumps/', views.get_stumps, name='api_stumps'),
+    path('robots.txt', views.robots_txt, name='robots_txt'),
 ]
 
 

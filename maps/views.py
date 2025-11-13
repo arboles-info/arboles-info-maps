@@ -6,10 +6,12 @@ import time
 import asyncio
 from datetime import datetime
 from typing import Optional, List
-from django.http import JsonResponse, HttpRequest
+from django.http import JsonResponse, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+import os
 import httpx
 from pydantic import BaseModel
 
@@ -162,6 +164,18 @@ def welcome(request: HttpRequest):
 def mapa(request: HttpRequest):
     """Página del mapa interactivo"""
     return render(request, 'mapa.html')
+
+
+def robots_txt(request: HttpRequest):
+    """Servir robots.txt"""
+    robots_path = os.path.join(settings.BASE_DIR, 'static', 'robots.txt')
+    try:
+        with open(robots_path, 'r') as f:
+            content = f.read()
+        return HttpResponse(content, content_type='text/plain')
+    except FileNotFoundError:
+        # Si no existe, devolver un robots.txt básico
+        return HttpResponse('User-agent: *\nDisallow:', content_type='text/plain')
 
 
 # Vistas API
