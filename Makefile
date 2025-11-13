@@ -1,7 +1,7 @@
 # Makefile para comandos de desarrollo y seguridad
 # Facilita la ejecución de scripts de seguridad y desarrollo
 
-.PHONY: help install-security-tools security-quick security-full security-install clean-security-reports test-local
+.PHONY: help install-security-tools security-quick security-full security-install clean-security-reports test-local docker-build docker-build-ci docker-test docker-run docker-clean docker-logs docker-stop docker-stop-all
 
 # Variables
 PYTHON := python3
@@ -173,7 +173,9 @@ install: check-venv ## Instalar dependencias en el virtualenv existente
 
 run: check-app-deps ## Ejecutar la aplicación Django
 	@echo "$(GREEN)🚀 Levantando Árboles Info Maps...$(NC)"
-	@echo "$(YELLOW)📱 Aplicación disponible en: http://$(HOST):$(PORT)$(NC)"
+	@echo "$(YELLOW)📱 Aplicación disponible en:$(NC)"
+	@echo "$(BLUE)   - http://localhost:$(PORT)$(NC)"
+	@echo "$(BLUE)   - http://127.0.0.1:$(PORT)$(NC)"
 	@echo "$(YELLOW)⏹️  Presiona Ctrl+C para detener$(NC)"
 	@echo "$(YELLOW)💡 Variables de entorno: DEBUG=True (por defecto), ALLOWED_HOSTS=localhost,127.0.0.1 (por defecto)$(NC)"
 	@echo ""
@@ -186,7 +188,9 @@ run: check-app-deps ## Ejecutar la aplicación Django
 # Levantar en modo desarrollo (con recarga automática)
 dev: check-app-deps ## Levantar la aplicación Django en modo desarrollo
 	@echo "$(GREEN)🚀 Levantando Árboles Info Maps en modo desarrollo...$(NC)"
-	@echo "$(YELLOW)📱 Aplicación disponible en: http://$(HOST):$(PORT)$(NC)"
+	@echo "$(YELLOW)📱 Aplicación disponible en:$(NC)"
+	@echo "$(BLUE)   - http://localhost:$(PORT)$(NC)"
+	@echo "$(BLUE)   - http://127.0.0.1:$(PORT)$(NC)"
 	@echo "$(YELLOW)🔄 Recarga automática habilitada$(NC)"
 	@echo "$(YELLOW)⏹️  Presiona Ctrl+C para detener$(NC)"
 	@echo "$(YELLOW)💡 Variables de entorno: DEBUG=True (por defecto), ALLOWED_HOSTS=localhost,127.0.0.1 (por defecto)$(NC)"
@@ -368,21 +372,113 @@ git-log: ## Mostrar últimos commits
 	@echo "📝 Últimos commits:"
 	@git log --oneline -10
 
-# Comandos de Docker (si se usa)
-docker-build: ## Construir imagen Docker
-	@echo "🐳 Construyendo imagen Docker..."
-	@if [ -f "Dockerfile" ]; then \
-		docker build -t arboles-info-maps .; \
+# Comandos de Docker
+DOCKER_IMAGE := arboles-info-maps
+DOCKER_TAG ?= dev
+DOCKER_SHA ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+docker-build: ## Construir imagen Docker (uso: make docker-build DOCKER_TAG=v1.0.0)
+	@echo "$(GREEN)🐳 Construyendo imagen Docker...$(NC)"
+	@if [ ! -f "Dockerfile" ]; then \
+		echo "$(RED)⚠️  No se encontró Dockerfile$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)📦 Imagen: $(DOCKER_IMAGE)$(NC)"
+	@echo "$(YELLOW)🏷️  Tag: $(DOCKER_TAG)$(NC)"
+	@echo "$(YELLOW)🔖 SHA: $(DOCKER_SHA)$(NC)"
+	@docker build \
+		-t $(DOCKER_IMAGE):$(DOCKER_TAG) \
+		-t $(DOCKER_IMAGE):$(DOCKER_SHA) \
+		.
+	@echo "$(GREEN)✅ Imagen construida exitosamente$(NC)"
+	@echo "$(BLUE)💡 Para ejecutar: make docker-run$(NC)"
+
+docker-build-ci: ## Construir imagen Docker para CI/CD (con SHA, tag y latest)
+	@echo "$(GREEN)🐳 Construyendo imagen Docker para CI/CD...$(NC)"
+	@if [ ! -f "Dockerfile" ]; then \
+		echo "$(RED)⚠️  No se encontró Dockerfile$(NC)"; \
+		exit 1; \
+	fi
+	@SHA=$${CIRCLE_SHA1:-$$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")}; \
+	TAG=$${DOCKER_TAG:-$${CIRCLE_TAG:-latest}}; \
+	echo "$(YELLOW)📦 Imagen: $(DOCKER_IMAGE)$(NC)"; \
+	echo "$(YELLOW)🔖 SHA: $$SHA$(NC)"; \
+	echo "$(YELLOW)🏷️  Tag: $$TAG$(NC)"; \
+	docker build \
+		-t $(DOCKER_IMAGE):$$SHA \
+		-t $(DOCKER_IMAGE):$$TAG \
+		-t $(DOCKER_IMAGE):latest \
+		. && \
+	echo "$(GREEN)✅ Imagen construida exitosamente$(NC)"
+
+docker-test: ## Verificar que la imagen Docker se construyó correctamente
+	@echo "$(GREEN)🧪 Verificando imagen Docker...$(NC)"
+	@docker images | grep $(DOCKER_IMAGE) || (echo "$(RED)❌ Imagen no encontrada$(NC)" && exit 1)
+	@docker inspect $(DOCKER_IMAGE):$(DOCKER_TAG) > /dev/null 2>&1 || \
+		(docker inspect $(DOCKER_IMAGE):latest > /dev/null 2>&1 && echo "$(GREEN)✅ Imagen verificada (latest)$(NC)") || \
+		(echo "$(RED)❌ No se pudo verificar la imagen$(NC)" && exit 1)
+	@echo "$(GREEN)✅ Imagen verificada correctamente$(NC)"
+
+docker-run: ## Ejecutar contenedor Docker (uso: make docker-run PORT=8080 DOCKER_TAG=dev)
+	@echo "$(GREEN)🚀 Ejecutando contenedor Docker...$(NC)"
+	@if [ ! -f "Dockerfile" ]; then \
+		echo "$(RED)⚠️  No se encontró Dockerfile$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)📱 Disponible en:$(NC)"
+	@echo "$(BLUE)   - http://localhost:$(PORT)$(NC)"
+	@echo "$(BLUE)   - http://127.0.0.1:$(PORT)$(NC)"
+	@echo "$(YELLOW)⏹️  Presiona Ctrl+C para detener$(NC)"
+	@echo "$(YELLOW)📦 Usando imagen: $(DOCKER_IMAGE):$(DOCKER_TAG)$(NC)"
+	@trap 'echo "$(YELLOW)🛑 Deteniendo contenedor...$(NC)"; docker stop $$CONTAINER_ID 2>/dev/null || true; exit' INT TERM; \
+	if ! docker images | grep -q "$(DOCKER_IMAGE).*$(DOCKER_TAG)"; then \
+		echo "$(YELLOW)⚠️  Imagen $(DOCKER_IMAGE):$(DOCKER_TAG) no encontrada. Construyendo...$(NC)"; \
+		make docker-build DOCKER_TAG=$(DOCKER_TAG); \
+	fi; \
+	CONTAINER_ID=$$(docker run -d -p $(PORT):8080 \
+		-e SECRET_KEY="$$(python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())' 2>/dev/null || echo 'django-insecure-dev-key')" \
+		-e DEBUG="True" \
+		-e ALLOWED_HOSTS="localhost,127.0.0.1,0.0.0.0" \
+		--name arboles-info-maps-$$(date +%s) \
+		$(DOCKER_IMAGE):$(DOCKER_TAG)); \
+	if [ -z "$$CONTAINER_ID" ]; then \
+		echo "$(RED)❌ Error al iniciar el contenedor$(NC)"; \
+		echo "$(YELLOW)💡 Asegúrate de que la imagen $(DOCKER_IMAGE):$(DOCKER_TAG) existe$(NC)"; \
+		echo "$(YELLOW)💡 Ejecuta: make docker-build DOCKER_TAG=$(DOCKER_TAG)$(NC)"; \
+		exit 1; \
+	fi; \
+	echo "$(GREEN)✅ Contenedor iniciado: $$CONTAINER_ID$(NC)"; \
+	docker logs -f $$CONTAINER_ID
+
+docker-clean: ## Eliminar imágenes Docker del proyecto
+	@echo "$(YELLOW)🧹 Limpiando imágenes Docker...$(NC)"
+	@docker images | grep $(DOCKER_IMAGE) | awk '{print $$3}' | xargs -r docker rmi -f 2>/dev/null || true
+	@echo "$(GREEN)✅ Imágenes eliminadas$(NC)"
+
+docker-logs: ## Ver logs de contenedores Docker en ejecución
+	@echo "$(YELLOW)📋 Logs de contenedores Docker:$(NC)"
+	@docker ps --filter "ancestor=$(DOCKER_IMAGE)" --format "{{.ID}}" | xargs -r docker logs -f || \
+		echo "$(YELLOW)⚠️  No hay contenedores en ejecución$(NC)"
+
+docker-stop: ## Detener todos los contenedores Docker del proyecto
+	@echo "$(YELLOW)🛑 Deteniendo contenedores Docker...$(NC)"
+	@CONTAINERS=$$(docker ps --filter "ancestor=$(DOCKER_IMAGE)" --format "{{.ID}}"); \
+	if [ -z "$$CONTAINERS" ]; then \
+		echo "$(YELLOW)⚠️  No hay contenedores en ejecución$(NC)"; \
 	else \
-		echo "⚠️  No se encontró Dockerfile"; \
+		echo "$$CONTAINERS" | xargs docker stop; \
+		echo "$$CONTAINERS" | xargs docker rm 2>/dev/null || true; \
+		echo "$(GREEN)✅ Contenedores detenidos y eliminados$(NC)"; \
 	fi
 
-docker-run: ## Ejecutar contenedor Docker
-	@echo "🐳 Ejecutando contenedor Docker..."
-	@if [ -f "Dockerfile" ]; then \
-		docker run -p 8000:8000 arboles-info-maps; \
+docker-stop-all: ## Detener y eliminar todos los contenedores (incluso detenidos)
+	@echo "$(YELLOW)🧹 Deteniendo y eliminando todos los contenedores Docker del proyecto...$(NC)"
+	@CONTAINERS=$$(docker ps -a --filter "ancestor=$(DOCKER_IMAGE)" --format "{{.ID}}"); \
+	if [ -z "$$CONTAINERS" ]; then \
+		echo "$(YELLOW)⚠️  No hay contenedores$(NC)"; \
 	else \
-		echo "⚠️  No se encontró Dockerfile"; \
+		echo "$$CONTAINERS" | xargs docker rm -f 2>/dev/null || true; \
+		echo "$(GREEN)✅ Contenedores eliminados$(NC)"; \
 	fi
 
 # Comando por defecto
