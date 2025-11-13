@@ -1,4 +1,4 @@
-name: opentrees-web
+name: arboles-info-maps
 region: nyc
 alerts:
   - rule: DEPLOYMENT_FAILED
@@ -6,7 +6,7 @@ alerts:
 
 # Configuración de la aplicación
 http_service:
-  name: opentrees-web-http
+  name: arboles-info-maps-http
   routes:
     - path: /
   
