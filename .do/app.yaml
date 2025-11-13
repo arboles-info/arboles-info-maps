@@ -22,8 +22,8 @@ http_service:
   instance_size_slug: basic-xxs
 
   # Build configuration
-  build_command: pip install --upgrade pip && pip install -r requirements.txt
-  run_command: uvicorn src.main:app --host 0.0.0.0 --port $PORT
+  build_command: pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --noinput
+  run_command: gunicorn arboles_info_project.wsgi:application --bind 0.0.0.0:$PORT
 
   # Variables de entorno
   envs:
