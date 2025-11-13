@@ -3,6 +3,99 @@
 
 {% block title %}Mapa de árboles y tocones - Visualizador de Árboles y Tocones{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Reducir altura del footer solo en la página del mapa */
+    .footer {
+        padding: 0.75rem 0 !important;
+        height: auto;
+        min-height: 60px;
+    }
+    
+    .footer-content {
+        padding: 0 2rem;
+    }
+    
+    .footer-content p {
+        margin: 0.25rem 0;
+        font-size: 0.85rem;
+    }
+    
+    .footer-content p:last-child {
+        font-size: 0.75rem;
+        opacity: 0.8;
+    }
+    
+    /* Prevenir scroll en la página del mapa */
+    html, body {
+        height: 100% !important;
+        overflow: hidden !important;
+    }
+    
+    main {
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+        height: calc(100vh - 80px) !important; /* Altura total menos header */
+        overflow: hidden;
+    }
+    
+    .page-container {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+        height: 100%;
+    }
+    
+    .controls-container {
+        margin-bottom: 0 !important;
+    }
+    
+    /* Ajustar el map-container para que no quede oculto por el footer */
+    /* Header ~80px + Footer reducido ~60px = 140px */
+    .map-container {
+        height: calc(100vh - 140px) !important;
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+        max-height: calc(100vh - 140px) !important;
+    }
+    
+    /* Ajustar posición de la leyenda para que quede visible sobre el footer */
+    .legend {
+        bottom: 70px !important;
+    }
+    
+    /* En móviles, ajustar más */
+    @media (max-width: 768px) {
+        main {
+            height: calc(100vh - 60px) !important;
+        }
+        
+        .map-container {
+            height: calc(100vh - 120px) !important;
+            max-height: calc(100vh - 120px) !important;
+        }
+        
+        .legend {
+            bottom: 80px !important;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        main {
+            height: calc(100vh - 50px) !important;
+        }
+        
+        .map-container {
+            height: calc(100vh - 110px) !important;
+            max-height: calc(100vh - 110px) !important;
+        }
+        
+        .legend {
+            bottom: 90px !important;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-container">
     <div class="controls-container">
