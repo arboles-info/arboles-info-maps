@@ -7,5 +7,5 @@ Disallow: /static/
 Allow: /
 
 # Sitemap location (if you have one)
-# Sitemap: https://yourdomain.com/sitemap.xml
+# Sitemap: https://arboles.info/sitemap.xml
 

@@ -11,9 +11,10 @@ VENV_DEV := venv
 VENV_BIN := $(VENV_DEV)/bin
 PIP_DEV := $(VENV_BIN)/pip
 PYTHON_VENV := $(VENV_BIN)/python
-APP := src/main.py
+MANAGE := manage.py
 HOST := 0.0.0.0
 PORT := 8000
+DJANGO_SETTINGS := arboles_info_project.settings
 
 # Colores para output
 GREEN := \033[0;32m
@@ -74,15 +75,10 @@ check-deps: ## Verificar dependencias del sistema
 	fi
 	@echo ""
 	@echo "$(BLUE)Dependencias de Python:$(NC)"
-	@if $(PYTHON) -c "import fastapi" 2>/dev/null; then \
-		echo "  ✅ FastAPI disponible"; \
+	@if $(PYTHON) -c "import django" 2>/dev/null; then \
+		echo "  ✅ Django disponible"; \
 	else \
-		echo "  ❌ FastAPI no encontrado"; \
-	fi
-	@if $(PYTHON) -c "import uvicorn" 2>/dev/null; then \
-		echo "  ✅ Uvicorn disponible"; \
-	else \
-		echo "  ❌ Uvicorn no encontrado"; \
+		echo "  ❌ Django no encontrado"; \
 	fi
 	@if $(PYTHON) -c "import httpx" 2>/dev/null; then \
 		echo "  ✅ HTTPX disponible"; \
@@ -102,7 +98,7 @@ check-deps: ## Verificar dependencias del sistema
 	@if ! $(PYTHON) -m venv --help >/dev/null 2>&1; then \
 		echo "  📦 Instalar venv: sudo apt install python3-venv"; \
 	fi
-	@if ! $(PYTHON) -c "import fastapi" 2>/dev/null; then \
+	@if ! $(PYTHON) -c "import django" 2>/dev/null; then \
 		echo "  📦 Instalar dependencias: make install-system"; \
 	fi
 
@@ -153,8 +149,12 @@ check-app-deps: ## Verificar que las dependencias están disponibles
 	else \
 		PYTHON_CMD="$(PYTHON)"; \
 	fi; \
-	if ! $$PYTHON_CMD -c "import fastapi, uvicorn, httpx, pydantic" 2>/dev/null; then \
+	if ! $$PYTHON_CMD -c "import django, httpx, pydantic" 2>/dev/null; then \
 		echo "$(RED)❌ Faltan dependencias. Ejecuta 'make setup' o 'make install-system' primero$(NC)"; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(MANAGE)" ]; then \
+		echo "$(RED)❌ manage.py no encontrado$(NC)"; \
 		exit 1; \
 	fi
 
@@ -171,48 +171,62 @@ install: check-venv ## Instalar dependencias en el virtualenv existente
 	@bash -c "source $(VENV_DEV)/bin/activate && pip install --upgrade pip && pip install -r requirements.txt"
 	@echo "$(GREEN)✅ Dependencias actualizadas$(NC)"
 
-run: check-app-deps ## Ejecutar la aplicación
-	@echo "$(GREEN)🚀 Levantando OpenTrees Web...$(NC)"
+run: check-app-deps ## Ejecutar la aplicación Django
+	@echo "$(GREEN)🚀 Levantando Árboles Info Maps...$(NC)"
 	@echo "$(YELLOW)📱 Aplicación disponible en: http://$(HOST):$(PORT)$(NC)"
 	@echo "$(YELLOW)⏹️  Presiona Ctrl+C para detener$(NC)"
+	@echo "$(YELLOW)💡 Variables de entorno: DEBUG=True (por defecto), ALLOWED_HOSTS=localhost,127.0.0.1 (por defecto)$(NC)"
 	@echo ""
 	@if [ -f "$(VENV_BIN)/python" ]; then \
-		$(PYTHON_VENV) $(APP); \
+		$(PYTHON_VENV) $(MANAGE) runserver $(HOST):$(PORT); \
 	else \
-		$(PYTHON) $(APP); \
+		$(PYTHON) $(MANAGE) runserver $(HOST):$(PORT); \
 	fi
 
 # Levantar en modo desarrollo (con recarga automática)
-dev: check-app-deps ## Levantar la aplicación en modo desarrollo
-	@echo "$(GREEN)🚀 Levantando OpenTrees Web en modo desarrollo...$(NC)"
+dev: check-app-deps ## Levantar la aplicación Django en modo desarrollo
+	@echo "$(GREEN)🚀 Levantando Árboles Info Maps en modo desarrollo...$(NC)"
 	@echo "$(YELLOW)📱 Aplicación disponible en: http://$(HOST):$(PORT)$(NC)"
 	@echo "$(YELLOW)🔄 Recarga automática habilitada$(NC)"
 	@echo "$(YELLOW)⏹️  Presiona Ctrl+C para detener$(NC)"
+	@echo "$(YELLOW)💡 Variables de entorno: DEBUG=True (por defecto), ALLOWED_HOSTS=localhost,127.0.0.1 (por defecto)$(NC)"
 	@echo ""
 	@if [ -f "$(VENV_BIN)/python" ]; then \
-		PYTHON_CMD="$(PYTHON_VENV)"; \
-		UVICORN_CMD="$(VENV_BIN)/uvicorn"; \
+		$(PYTHON_VENV) $(MANAGE) runserver $(HOST):$(PORT); \
 	else \
-		PYTHON_CMD="$(PYTHON)"; \
-		UVICORN_CMD="uvicorn"; \
-	fi; \
-	if command -v $$UVICORN_CMD >/dev/null 2>&1; then \
-    		$$UVICORN_CMD src.main:app --host $(HOST) --port $(PORT) --reload; \
-    	elif $$PYTHON_CMD -c "import uvicorn" 2>/dev/null; then \
-    		$$PYTHON_CMD -m uvicorn src.main:app --host $(HOST) --port $(PORT) --reload; \
-	else \
-		echo "$(RED)❌ Uvicorn no encontrado para modo desarrollo$(NC)"; \
-		echo "$(YELLOW)Usando modo normal...$(NC)"; \
-		$$PYTHON_CMD $(APP); \
+		$(PYTHON) $(MANAGE) runserver $(HOST):$(PORT); \
 	fi
 
-test: check-app-deps ## Ejecutar tests (si existen)
+test: check-app-deps ## Ejecutar tests Django (si existen)
 	@echo "$(YELLOW)🧪 Ejecutando tests...$(NC)"
-	@if [ -f "test_*.py" ] || [ -d "tests" ]; then \
-		$(PYTHON) -m pip install --user pytest pytest-asyncio 2>/dev/null || true; \
-		$(PYTHON) -m pytest -v; \
+	@if [ -f "$(VENV_BIN)/python" ]; then \
+		$(PYTHON_VENV) $(MANAGE) test; \
 	else \
-		echo "$(YELLOW)⚠️  No se encontraron tests$(NC)"; \
+		$(PYTHON) $(MANAGE) test; \
+	fi
+
+migrate: check-app-deps ## Ejecutar migraciones de Django
+	@echo "$(YELLOW)🔄 Ejecutando migraciones...$(NC)"
+	@if [ -f "$(VENV_BIN)/python" ]; then \
+		$(PYTHON_VENV) $(MANAGE) migrate; \
+	else \
+		$(PYTHON) $(MANAGE) migrate; \
+	fi
+
+makemigrations: check-app-deps ## Crear migraciones de Django
+	@echo "$(YELLOW)📝 Creando migraciones...$(NC)"
+	@if [ -f "$(VENV_BIN)/python" ]; then \
+		$(PYTHON_VENV) $(MANAGE) makemigrations; \
+	else \
+		$(PYTHON) $(MANAGE) makemigrations; \
+	fi
+
+collectstatic: check-app-deps ## Recopilar archivos estáticos
+	@echo "$(YELLOW)📦 Recopilando archivos estáticos...$(NC)"
+	@if [ -f "$(VENV_BIN)/python" ]; then \
+		$(PYTHON_VENV) $(MANAGE) collectstatic --noinput; \
+	else \
+		$(PYTHON) $(MANAGE) collectstatic --noinput; \
 	fi
 
 # Verificar código con linters
@@ -220,17 +234,17 @@ lint: check-app-deps ## Verificar código con linters
 	@echo "$(YELLOW)🔍 Verificando código...$(NC)"
 	@$(PYTHON) -m pip install --user flake8 black isort 2>/dev/null || true
 	@echo "$(YELLOW)📝 Verificando con flake8...$(NC)"
-	@$(PYTHON) -m flake8 $(APP) --max-line-length=100 --ignore=E203,W503 || true
+	@$(PYTHON) -m flake8 maps/ arboles_info_project/ --max-line-length=100 --ignore=E203,W503 || true
 	@echo "$(YELLOW)📝 Verificando imports con isort...$(NC)"
-	@$(PYTHON) -m isort $(APP) --check-only --diff || true
+	@$(PYTHON) -m isort maps/ arboles_info_project/ --check-only --diff || true
 	@echo "$(GREEN)✅ Verificación completada$(NC)"
 
 # Formatear código
 format: check-app-deps ## Formatear código
 	@echo "$(YELLOW)�� Formateando código...$(NC)"
 	@$(PYTHON) -m pip install --user black isort 2>/dev/null || true
-	@$(PYTHON) -m black $(APP) --line-length=100
-	@$(PYTHON) -m isort $(APP)
+	@$(PYTHON) -m black maps/ arboles_info_project/ --line-length=100
+	@$(PYTHON) -m isort maps/ arboles_info_project/
 	@echo "$(GREEN)✅ Código formateado$(NC)"
 
 # Comandos de limpieza
@@ -243,6 +257,8 @@ clean: ## Limpiar archivos temporales
 	rm -rf .pytest_cache 2>/dev/null || true
 	rm -rf .coverage 2>/dev/null || true
 	rm -rf htmlcov 2>/dev/null || true
+	rm -rf db.sqlite3 2>/dev/null || true
+	rm -rf staticfiles 2>/dev/null || true
 	@echo "$(GREEN)✅ Archivos temporales eliminados$(NC)"
 
 # Limpiar virtualenv
@@ -313,11 +329,11 @@ info: ## Mostrar información del proyecto
 		echo "$(YELLOW)Virtualenv:$(NC) No existe"; \
 	fi
 	@echo "$(YELLOW)Directorio actual:$(NC) $$(pwd)"
-	@echo "$(YELLOW)Archivo principal:$(NC) $(APP)"
-	@if [ -f "$(APP)" ]; then \
-		echo "$(GREEN)✅ Archivo principal encontrado$(NC)"; \
+	@echo "$(YELLOW)Archivo principal:$(NC) $(MANAGE)"
+	@if [ -f "$(MANAGE)" ]; then \
+		echo "$(GREEN)✅ manage.py encontrado$(NC)"; \
 	else \
-		echo "$(RED)❌ Archivo principal no encontrado: $(APP)$(NC)"; \
+		echo "$(RED)❌ manage.py no encontrado$(NC)"; \
 	fi
 	@echo ""
 	@echo "$(BLUE)Dependencias instaladas:$(NC)"
@@ -326,15 +342,11 @@ info: ## Mostrar información del proyecto
 	else \
 		PYTHON_CMD="$(PYTHON)"; \
 	fi; \
-	if $$PYTHON_CMD -c "import fastapi" 2>/dev/null; then \
-		echo "  ✅ FastAPI"; \
+	if $$PYTHON_CMD -c "import django" 2>/dev/null; then \
+		DJANGO_VERSION=$$($$PYTHON_CMD -c "import django; print(django.get_version())" 2>/dev/null); \
+		echo "  ✅ Django ($$DJANGO_VERSION)"; \
 	else \
-		echo "  ❌ FastAPI"; \
-	fi; \
-	if $$PYTHON_CMD -c "import uvicorn" 2>/dev/null; then \
-		echo "  ✅ Uvicorn"; \
-	else \
-		echo "  ❌ Uvicorn"; \
+		echo "  ❌ Django"; \
 	fi; \
 	if $$PYTHON_CMD -c "import httpx" 2>/dev/null; then \
 		echo "  ✅ HTTPX"; \

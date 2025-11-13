@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mapa de árboles y tocones - Visualizador de Árboles y Tocones{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Reducir altura del footer solo en la página del mapa */
+    .footer {
+        padding: 0.75rem 0 !important;
+        height: auto;
+        min-height: 60px;
+    }
+    
+    .footer-content {
+        padding: 0 2rem;
+    }
+    
+    .footer-content p {
+        margin: 0.25rem 0;
+        font-size: 0.85rem;
+    }
+    
+    .footer-content p:last-child {
+        font-size: 0.75rem;
+        opacity: 0.8;
+    }
+    
+    /* Prevenir scroll en la página del mapa */
+    html, body {
+        height: 100% !important;
+        overflow: hidden !important;
+    }
+    
+    main {
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+        height: calc(100vh - 80px) !important; /* Altura total menos header */
+        overflow: hidden;
+    }
+    
+    .page-container {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+        height: 100%;
+    }
+    
+    .controls-container {
+        margin-bottom: 0 !important;
+    }
+    
+    /* Ajustar el map-container para que no quede oculto por el footer */
+    /* Header ~80px + Footer reducido ~60px = 140px */
+    .map-container {
+        height: calc(100vh - 140px) !important;
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+        max-height: calc(100vh - 140px) !important;
+    }
+    
+    /* Ajustar posición de la leyenda para que quede visible sobre el footer */
+    .legend {
+        bottom: 70px !important;
+    }
+    
+    /* En móviles, ajustar más */
+    @media (max-width: 768px) {
+        main {
+            height: calc(100vh - 60px) !important;
+        }
+        
+        .map-container {
+            height: calc(100vh - 120px) !important;
+            max-height: calc(100vh - 120px) !important;
+        }
+        
+        .legend {
+            bottom: 80px !important;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        main {
+            height: calc(100vh - 50px) !important;
+        }
+        
+        .map-container {
+            height: calc(100vh - 110px) !important;
+            max-height: calc(100vh - 110px) !important;
+        }
+        
+        .legend {
+            bottom: 90px !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="controls-container">
+        <button class="hamburger-menu" onclick="toggleControls()" id="hamburger-btn">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+        
+        <div class="controls" id="controls">
+        <div class="control-group">
+            <label for="bbox">Área (lat,lon,lat,lon):</label>
+            <input type="text" id="bbox" placeholder="36.613770852449,-6.410994529724,36.641667904189,-6.328597068787" value="36.613770852449,-6.410994529724,36.641667904189,-6.328597068787">
+        </div>
+        
+        <div class="control-group">
+            <label for="limit">Límite de resultados:</label>
+            <input type="number" id="limit" value="500" min="10" max="1000">
+        </div>
+        
+        <div class="control-group">
+            <label>
+                <input type="checkbox" id="autoUpdate" checked> Actualización automática
+            </label>
+        </div>
+        
+        <div class="control-group">
+            <label>
+                <input type="checkbox" id="autoFitBounds"> Ajustar vista a datos
+            </label>
+        </div>
+        
+        <button class="btn" onclick="loadData()">Cargar Datos</button>
+        <button class="btn" onclick="clearMap()">Limpiar Mapa</button>
+        <button class="btn" onclick="getUserLocation()">📍 Mi Ubicación</button>
+    </div>
+</div>
+
+<div class="map-container">
+    <!-- Estadísticas móviles (solo visibles en móviles) -->
+    <div class="mobile-stats" id="mobile-stats">
+        <div class="mobile-stats-summary">
+            <span class="mobile-stat-item">🌳 <span id="mobile-tree-count">0</span></span>
+            <span class="mobile-stat-item">🪵 <span id="mobile-stump-count">0</span></span>
+            <span class="mobile-stat-item">📊 <span id="mobile-total-count">0</span></span>
+        </div>
+    </div>
+    
+    <div id="map"></div>
+    
+    <div class="loading" id="loading">
+        <p>Cargando datos de OpenStreetMap...</p>
+    </div>
+    
+    <div class="stats" id="stats">
+        <h3>Estadísticas</h3>
+        <div class="stats-summary">
+            <p>Árboles: <span id="tree-count">0</span></p>
+            <p>Tocones: <span id="stump-count">0</span></p>
+            <p>Total: <span id="total-count">0</span></p>
+        </div>
+        
+        <div class="stats-breakdown" id="stats-breakdown">
+            <h4>Árboles por Especie</h4>
+            <div class="species-list" id="species-list">
+                <p class="no-data">No hay datos cargados</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="legend">
+        <h3>Leyenda</h3>
+        <div class="legend-item clickable" id="legend-trees" data-layer="trees">
+            <div class="legend-color tree-color"></div>
+            <span>Árboles</span>
+            <span class="toggle-indicator">👁️</span>
+        </div>
+        <div class="legend-item clickable" id="legend-stumps" data-layer="stumps">
+            <div class="legend-color stump-color"></div>
+            <span>Tocones</span>
+            <span class="toggle-indicator">👁️</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Aplicación JavaScript -->
+<script src="{% static 'js/app.js' %}"></script>
+{% endblock %}
+
+

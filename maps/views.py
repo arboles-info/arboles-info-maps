@@ -1,77 +1,28 @@
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, PlainTextResponse
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List, Optional
-import httpx
-import asyncio
-from datetime import datetime
+"""
+Vistas de la aplicación maps
+"""
 import logging
 import time
-import sys
-from pathlib import Path
+import asyncio
+from datetime import datetime
+from typing import Optional, List
+from django.http import JsonResponse, HttpRequest, HttpResponse
+from django.shortcuts import render
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+import os
+import httpx
+from pydantic import BaseModel
 
-# Configurar logging detallado (solo stdout)
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)
-    ]
-)
-
+# Configurar logging
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Mapa de árboles y tocones", description="Aplicación para visualizar árboles y tocones usando datos de OSM")
+# Configuración de la API de Overpass
+OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
-# Rutas de archivos basadas en la ubicación de este archivo
-HERE = Path(__file__).resolve().parent
-STATIC_DIR = HERE / "static"
 
-# Configurar archivos estáticos
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-
-# Configurar CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Middleware de logging para todas las peticiones HTTP
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    start_time = time.time()
-    
-    # Log de la petición entrante
-    logger.info(f"🔵 REQUEST: {request.method} {request.url.path}")
-    logger.info(f"Query params: {dict(request.query_params)}")
-    logger.info(f"Client IP: {request.client.host if request.client else 'unknown'}")
-    
-    # Procesar la petición
-    try:
-        response = await call_next(request)
-        
-        # Calcular tiempo de procesamiento
-        process_time = time.time() - start_time
-        
-        # Log de la respuesta
-        logger.info(f"🟢 RESPONSE: {response.status_code} - {process_time:.3f}s")
-        
-        # Agregar header con tiempo de procesamiento
-        response.headers["X-Process-Time"] = str(process_time)
-        
-        return response
-        
-    except Exception as e:
-        process_time = time.time() - start_time
-        logger.error(f"🔴 ERROR: {str(e)} - {process_time:.3f}s")
-        raise
-
-# Modelos de datos
+# Modelos Pydantic (mantenidos de FastAPI)
 class Tree(BaseModel):
     id: str
     lat: float
@@ -83,6 +34,12 @@ class Tree(BaseModel):
     health: Optional[str] = None
     last_updated: Optional[datetime] = None
 
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat() if v else None
+        }
+
+
 class Stump(BaseModel):
     id: str
     lat: float
@@ -92,12 +49,13 @@ class Stump(BaseModel):
     removal_date: Optional[datetime] = None
     reason: Optional[str] = None
 
-class OverpassResponse(BaseModel):
-    elements: List[dict]
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat() if v else None
+        }
 
-# Configuración de la API de Overpass
-OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
+# Funciones auxiliares
 async def query_overpass(query: str) -> dict:
     """Realiza una consulta a la API de Overpass en una sola petición (sin reintentos)."""
     start_time = time.time()
@@ -129,23 +87,22 @@ async def query_overpass(query: str) -> dict:
     except httpx.TimeoutException as e:
         total_time = time.time() - start_time
         logger.error(f"TIMEOUT consultando Overpass API en {total_time:.2f}s: {str(e)}")
-        raise HTTPException(status_code=504, detail="Timeout al consultar Overpass API")
+        raise Exception(f"Timeout al consultar Overpass API")
     except httpx.HTTPStatusError as e:
         total_time = time.time() - start_time
         status_code = e.response.status_code
         logger.error(f"Error HTTP {status_code} consultando Overpass API en {total_time:.2f}s. Response: {e.response.text[:200]}")
-        # Preservar 504 para permitir reintentos aguas arriba
         if status_code == 504:
-            raise HTTPException(status_code=504, detail="Gateway Timeout desde Overpass API")
-        raise HTTPException(status_code=502, detail=f"Error HTTP {status_code} al consultar Overpass API")
+            raise Exception(f"Gateway Timeout desde Overpass API")
+        raise Exception(f"Error HTTP {status_code} al consultar Overpass API")
     except httpx.RequestError as e:
         total_time = time.time() - start_time
         logger.error(f"Error de conexión consultando Overpass API en {total_time:.2f}s: {str(e)}")
-        raise HTTPException(status_code=503, detail=f"Error de conexión con Overpass API: {str(e)}")
+        raise Exception(f"Error de conexión con Overpass API: {str(e)}")
     except Exception as e:
         total_time = time.time() - start_time
         logger.error(f"Error inesperado consultando Overpass API en {total_time:.2f}s: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error inesperado al consultar Overpass API: {str(e)}")
+        raise Exception(f"Error inesperado al consultar Overpass API: {str(e)}")
 
 
 def parse_tree_element(element: dict) -> Tree:
@@ -163,6 +120,7 @@ def parse_tree_element(element: dict) -> Tree:
         last_updated=datetime.now()
     )
 
+
 def parse_stump_element(element: dict) -> Stump:
     """Convierte un elemento de OSM en un objeto Stump"""
     tags = element.get("tags", {})
@@ -176,67 +134,74 @@ def parse_stump_element(element: dict) -> Stump:
         reason=tags.get("removal_reason")
     )
 
-async def query_overpass_with_retry(query: str, max_retries: int = 2, initial_delay: float = 1.5, backoff_factor: float = 2.0) -> dict:
-    """Ejecuta la consulta a Overpass con reintentos en caso de 504 (timeout gateway o cliente).
 
-    - Reintenta solo ante HTTPException con status 504
-    - Backoff exponencial entre intentos
-    """
+async def query_overpass_with_retry(query: str, max_retries: int = 2, initial_delay: float = 1.5, backoff_factor: float = 2.0) -> dict:
+    """Ejecuta la consulta a Overpass con reintentos en caso de timeout."""
     attempt = 0
     delay = initial_delay
     while True:
         try:
             return await query_overpass(query)
-        except HTTPException as exc:
-            if exc.status_code == 504 and attempt < max_retries:
-                attempt += 1
-                logger.warning(f"Intento {attempt}/{max_retries} tras 504 de Overpass. Reintentando en {delay:.1f}s")
-                await asyncio.sleep(delay)
-                delay *= backoff_factor
-                continue
-            # No es 504 o se agotaron los reintentos
+        except Exception as exc:
+            error_msg = str(exc)
+            if "504" in error_msg or "Timeout" in error_msg:
+                if attempt < max_retries:
+                    attempt += 1
+                    logger.warning(f"Intento {attempt}/{max_retries} tras timeout de Overpass. Reintentando en {delay:.1f}s")
+                    await asyncio.sleep(delay)
+                    delay *= backoff_factor
+                    continue
+            # No es timeout o se agotaron los reintentos
             raise
 
-@app.get("/", include_in_schema=False)
-async def read_index():
-    """Endpoint raíz que sirve la página de índice"""
-    try:
-        with open(STATIC_DIR / "welcome.html", "r", encoding="utf-8") as f:
-            content = f.read()
-        return HTMLResponse(content=content)
-    except FileNotFoundError:
-        return HTMLResponse(content="<h1>Error: Archivo welcome.html no encontrado</h1>", status_code=404)
 
-@app.get("/mapa", include_in_schema=False)
-async def read_map():
-    """Endpoint que sirve la página principal del mapa"""
-    try:
-        with open(STATIC_DIR / "index.html", "r", encoding="utf-8") as f:
-            content = f.read()
-        return HTMLResponse(content=content)
-    except FileNotFoundError:
-        return HTMLResponse(content="<h1>Error: Archivo index.html no encontrado</h1>", status_code=404)
+# Vistas de páginas
+def welcome(request: HttpRequest):
+    """Página de bienvenida"""
+    return render(request, 'welcome.html')
 
-@app.get("/api/trees", response_model=List[Tree])
-async def get_trees(
-    bbox: Optional[str] = None,
-    limit: int = 500,
-    timeout: int = 6000
-):
+
+def mapa(request: HttpRequest):
+    """Página del mapa interactivo"""
+    return render(request, 'mapa.html')
+
+
+def robots_txt(request: HttpRequest):
+    """Servir robots.txt"""
+    robots_path = os.path.join(settings.BASE_DIR, 'static', 'robots.txt')
+    try:
+        with open(robots_path, 'r') as f:
+            content = f.read()
+        return HttpResponse(content, content_type='text/plain')
+    except FileNotFoundError:
+        # Si no existe, devolver un robots.txt básico
+        return HttpResponse('User-agent: *\nDisallow:', content_type='text/plain')
+
+
+# Vistas API
+@csrf_exempt
+@require_http_methods(["GET"])
+async def get_trees(request: HttpRequest):
     """
     Obtiene árboles de OSM en un área específica
     
     Args:
         bbox: Bounding box en formato "min_lat,min_lon,max_lat,max_lon"
         limit: Número máximo de resultados (máximo 1000)
+        timeout: Timeout para la consulta Overpass
     """
     start_time = time.time()
     logger.info(f"Starting endpoint /api/trees")
+    
+    bbox = request.GET.get('bbox')
+    limit = int(request.GET.get('limit', 500))
+    timeout = int(request.GET.get('timeout', 6000))
+    
     logger.info(f"Parámetros recibidos - bbox: {bbox}, limit: {limit}, timeout: {timeout}")
     
     if not bbox:
         logger.warning("No se proporcionó bbox, devolviendo lista vacía")
-        return []
+        return JsonResponse([], safe=False)
     
     try:
         if not timeout:
@@ -288,7 +253,7 @@ async def get_trees(
 
             if not elements:
                 logger.warning("No se encontraron elementos en la respuesta de Overpass")
-                return []
+                return JsonResponse([], safe=False)
             
             # Procesar elementos
             processed_count = 0
@@ -298,7 +263,7 @@ async def get_trees(
                 if element.get("type") == "node":
                     try:
                         tree = parse_tree_element(element)
-                        trees.append(tree)
+                        trees.append(tree.model_dump())
                         processed_count += 1
                     except Exception as e:
                         error_count += 1
@@ -309,46 +274,44 @@ async def get_trees(
             logger.info("Finished endpoint /api/trees")
             logger.info(f"Árboles procesados: {processed_count}, Errores: {error_count}, Tiempo total: {total_time:.2f}s")
             
-            return trees
+            return JsonResponse(trees, safe=False)
             
-        except HTTPException as e:
-            total_time = time.time() - start_time
-            logger.error("HTTPException happened in /api/trees")
-            logger.error(f"HTTPException: {e.detail}. Tiempo total: {total_time:.2f}s")
-            raise
         except Exception as e:
             total_time = time.time() - start_time
-            logger.error("Unexpected error happened in /api/trees")
+            logger.error("Error happened in /api/trees")
             logger.error(f"Error: {str(e)}. Tiempo total: {total_time:.2f}s")
-            raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+            return JsonResponse({'error': 'Error interno del servidor.'}, status=500)
     
     except Exception as e:
         total_time = time.time() - start_time
         logger.error("Error happened in parsing bbox in /api/trees")
-        logger.error(f"Error: {str(e)}")
         logger.error(f"Error parsing bbox: {str(e)}. Tiempo total: {total_time:.2f}s")
-        raise HTTPException(status_code=400, detail=f"Error en formato de bbox: {str(e)}")
+        return JsonResponse({'error': f'Error en formato de bbox: {str(e)}'}, status=400)
 
-@app.get("/api/stumps", response_model=List[Stump])
-async def get_stumps(
-    bbox: str = None,
-    limit: Optional[int] = 500,
-    timeout: int = 6000
-):
+
+@csrf_exempt
+@require_http_methods(["GET"])
+async def get_stumps(request: HttpRequest):
     """
     Obtiene tocones de OSM en un área específica
     
     Args:
         bbox: Bounding box en formato "min_lat,min_lon,max_lat,max_lon" (required)
         limit: Número máximo de resultados (default: 500, máximo 1000)
+        timeout: Timeout para la consulta Overpass
     """
     start_time = time.time()
     logger.info("Starting endpoint /api/stumps")
+    
+    bbox = request.GET.get('bbox')
+    limit = int(request.GET.get('limit', 500))
+    timeout = int(request.GET.get('timeout', 6000))
+    
     logger.info(f"Parámetros recibidos - bbox: {bbox}, limit: {limit}, timeout: {timeout}")
     
     if not bbox:
         logger.warning("No se proporcionó bbox, devolviendo lista vacía")
-        return []
+        return JsonResponse([], safe=False)
 
     try:
         min_lat, min_lon, max_lat, max_lon = map(float, bbox.split(","))
@@ -403,7 +366,7 @@ async def get_stumps(
             
             if not elements:
                 logger.warning("No se encontraron elementos en la respuesta de Overpass")
-                return []
+                return JsonResponse([], safe=False)
             
             # Procesar elementos
             processed_count = 0
@@ -413,7 +376,7 @@ async def get_stumps(
                 if element.get("type") == "node":
                     try:
                         stump = parse_stump_element(element)
-                        stumps.append(stump)
+                        stumps.append(stump.model_dump())
                         processed_count += 1
                     except Exception as e:
                         error_count += 1
@@ -424,22 +387,15 @@ async def get_stumps(
             logger.info("Finished endpoint /api/stumps")
             logger.info(f"Tocones procesados: {processed_count}, Errores: {error_count}, Tiempo total: {total_time:.2f}s")
             
-            return stumps
+            return JsonResponse(stumps, safe=False)
             
-        except HTTPException as e:
-            total_time = time.time() - start_time
-            logger.error("HTTPException happened in /api/stumps")
-            logger.error(f"HTTPException: {e.detail}. Tiempo total: {total_time:.2f}s")
-            # Si hay error con Overpass API, devolver lista vacía en lugar de fallar
-            logger.warning("Devolviendo lista vacía debido a error de Overpass API")
-            return []
         except Exception as e:
             total_time = time.time() - start_time
-            logger.error("Unexpected error happened in /api/stumps")
+            logger.error("Error happened in /api/stumps")
             logger.error(f"Error: {str(e)}. Tiempo total: {total_time:.2f}s")
             # Devolver lista vacía en lugar de fallar
-            logger.warning("Devolviendo lista vacía debido a error inesperado")
-            return []
+            logger.warning("Devolviendo lista vacía debido a error")
+            return JsonResponse([], safe=False)
     
     except Exception as e:
         total_time = time.time() - start_time
@@ -447,20 +403,4 @@ async def get_stumps(
         logger.error(f"Error parsing bbox: {str(e)}. Tiempo total: {total_time:.2f}s")
         # Devolver lista vacía en lugar de fallar
         logger.warning("Devolviendo lista vacía debido a error de parsing")
-        return []
-
-
-if __name__ == "__main__":
-    import uvicorn
-    import os
-    port = int(os.environ.get("PORT", 8000))
-    # Configuración con timeouts más generosos para consultas largas
-    uvicorn.run(
-        app, 
-        host="0.0.0.0", 
-        port=port,
-        timeout_keep_alive=120,  # Mantener conexiones vivas por 2 minutos
-        timeout_graceful_shutdown=30  # Tiempo para cerrar conexiones gracefully
-    )
-
-
+        return JsonResponse([], safe=False)
