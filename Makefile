@@ -175,6 +175,7 @@ run: check-app-deps ## Ejecutar la aplicación Django
 	@echo "$(GREEN)🚀 Levantando Árboles Info Maps...$(NC)"
 	@echo "$(YELLOW)📱 Aplicación disponible en: http://$(HOST):$(PORT)$(NC)"
 	@echo "$(YELLOW)⏹️  Presiona Ctrl+C para detener$(NC)"
+	@echo "$(YELLOW)💡 Variables de entorno: DEBUG=True (por defecto), ALLOWED_HOSTS=localhost,127.0.0.1 (por defecto)$(NC)"
 	@echo ""
 	@if [ -f "$(VENV_BIN)/python" ]; then \
 		$(PYTHON_VENV) $(MANAGE) runserver $(HOST):$(PORT); \
@@ -188,6 +189,7 @@ dev: check-app-deps ## Levantar la aplicación Django en modo desarrollo
 	@echo "$(YELLOW)📱 Aplicación disponible en: http://$(HOST):$(PORT)$(NC)"
 	@echo "$(YELLOW)🔄 Recarga automática habilitada$(NC)"
 	@echo "$(YELLOW)⏹️  Presiona Ctrl+C para detener$(NC)"
+	@echo "$(YELLOW)💡 Variables de entorno: DEBUG=True (por defecto), ALLOWED_HOSTS=localhost,127.0.0.1 (por defecto)$(NC)"
 	@echo ""
 	@if [ -f "$(VENV_BIN)/python" ]; then \
 		$(PYTHON_VENV) $(MANAGE) runserver $(HOST):$(PORT); \
