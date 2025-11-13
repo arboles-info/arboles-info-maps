@@ -126,20 +126,24 @@ jobs:
       run: |
         NEW_TAG="${{ steps.bump.outputs.new_tag }}"
         
-        # Pushear el tag
+        # Pushear el tag (esto funciona porque los tags no están protegidos)
+        echo "Pusheando tag $NEW_TAG..."
         git push origin "$NEW_TAG"
         
-        # Si hay cambios en archivos (como CHANGELOG.md), pushearlos también
-        # Nota: cz bump ya crea el commit, solo necesitamos pushearlo
-        if [ -n "$(git status --porcelain)" ]; then
-          echo "Hay cambios sin commitear, esto no debería pasar"
-          git status
-        fi
-        
-        # Verificar si hay commits locales (el commit de bump creado por cz bump)
+        # Intentar pushear el commit de bump de versión
+        # Nota: Esto puede fallar si la rama está protegida, pero el tag ya está pusheado
         if [ "$(git rev-list --count HEAD ^origin/main)" -gt 0 ]; then
-          echo "Pusheando commit de bump de versión..."
-          git push origin main
+          echo "Intentando pushear commit de bump de versión..."
+          if git push origin main 2>&1; then
+            echo "✅ Commit de bump pusheado exitosamente"
+          else
+            echo "⚠️ No se pudo pushear el commit de bump (rama protegida)"
+            echo "El tag $NEW_TAG fue creado exitosamente, pero el commit de bump no se pudo pushear."
+            echo "Para resolver esto:"
+            echo "1. Configura un Personal Access Token (PAT) con permisos de escritura"
+            echo "2. O permite que 'github-actions[bot]' haga bypass en las reglas de protección"
+            echo "3. O haz push manual del commit de bump desde tu máquina local"
+          fi
         fi
         
         echo "✅ Tag $NEW_TAG creado y pusheado exitosamente"
