@@ -1,3 +1,9 @@
+## v0.1.2 (2025-11-14)
+
+### Fix
+
+- **.circleci/config.yml**: fixed version in workflows error
+
 ## v0.1.1 (2025-11-14)
 
 ### Fix
