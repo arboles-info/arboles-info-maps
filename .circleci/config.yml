@@ -142,62 +142,70 @@ jobs:
           command: |
             make docker-test
       
-      # Login al registry Docker
+      # Login al DigitalOcean Container Registry
       - run:
-          name: Login al registry Docker
+          name: Login al DigitalOcean Container Registry
           command: |
-            if [ -z "${DOCKER_REGISTRY_URL}" ] || [ -z "${DOCKER_REGISTRY_USERNAME}" ] || [ -z "${DOCKER_REGISTRY_PASSWORD}" ]; then
-              echo "⚠️  Variables de registry no configuradas. Saltando push al registry."
-              echo "💡 Configura DOCKER_REGISTRY_URL, DOCKER_REGISTRY_USERNAME y DOCKER_REGISTRY_PASSWORD en CircleCI"
+            if [ -z "${DO_REGISTRY_TOKEN}" ]; then
+              echo "⚠️  Variable DO_REGISTRY_TOKEN no configurada. Saltando push al registry."
+              echo "💡 Configura DO_REGISTRY_TOKEN en CircleCI (Settings → Environment Variables)"
+              echo "💡 Para obtener el token: doctl registry login o crea un token en DigitalOcean"
               exit 0
             fi
-            echo "🔐 Autenticando en registry: ${DOCKER_REGISTRY_URL}"
-            echo "${DOCKER_REGISTRY_PASSWORD}" | docker login ${DOCKER_REGISTRY_URL} -u "${DOCKER_REGISTRY_USERNAME}" --password-stdin
+            echo "🔐 Autenticando en DigitalOcean Container Registry..."
+            echo "${DO_REGISTRY_TOKEN}" | docker login registry.digitalocean.com -u "${DO_REGISTRY_TOKEN}" --password-stdin
       
-      # Taggear imagen para el registry
+      # Taggear imagen para DigitalOcean Container Registry
       - run:
-          name: Taggear imagen para registry
+          name: Taggear imagen para DigitalOcean Registry
           command: |
-            if [ -z "${DOCKER_REGISTRY_URL}" ] || [ -z "${DOCKER_REGISTRY_REPOSITORY:-arboles-info-maps}" ]; then
-              echo "⚠️  Variables de registry no configuradas. Saltando tag."
+            if [ -z "${DO_REGISTRY_TOKEN}" ]; then
+              echo "⚠️  Variable DO_REGISTRY_TOKEN no configurada. Saltando tag."
               exit 0
             fi
-            REPO="${DOCKER_REGISTRY_REPOSITORY:-arboles-info-maps}"
-            echo "🏷️  Taggeando imagen para: ${DOCKER_REGISTRY_URL}/${REPO}"
+            REGISTRY="registry.digitalocean.com"
+            REGISTRY_NAME="${DO_REGISTRY_NAME:-arboles-info}"
+            IMAGE_NAME="${DO_IMAGE_NAME:-arboles-info-maps}"
+            FULL_IMAGE="${REGISTRY}/${REGISTRY_NAME}/${IMAGE_NAME}"
+            echo "🏷️  Taggeando imagen para: ${FULL_IMAGE}"
             # Usar el tag de git si existe, sino usar SHA
             if [ -n "${CIRCLE_TAG}" ]; then
               echo "🏷️  Usando tag de git: ${CIRCLE_TAG}"
-              docker tag arboles-info-maps:${CIRCLE_TAG} ${DOCKER_REGISTRY_URL}/${REPO}:${CIRCLE_TAG}
-              docker tag arboles-info-maps:${CIRCLE_TAG} ${DOCKER_REGISTRY_URL}/${REPO}:latest
-              docker tag arboles-info-maps:${CIRCLE_TAG} ${DOCKER_REGISTRY_URL}/${REPO}:${CIRCLE_SHA1}
+              docker tag arboles-info-maps:${CIRCLE_TAG} ${FULL_IMAGE}:${CIRCLE_TAG}
+              docker tag arboles-info-maps:${CIRCLE_TAG} ${FULL_IMAGE}:latest
+              docker tag arboles-info-maps:${CIRCLE_TAG} ${FULL_IMAGE}:${CIRCLE_SHA1}
             else
               echo "🔖 Usando SHA: ${CIRCLE_SHA1}"
-              docker tag arboles-info-maps:${CIRCLE_SHA1} ${DOCKER_REGISTRY_URL}/${REPO}:${CIRCLE_SHA1}
-              docker tag arboles-info-maps:${CIRCLE_SHA1} ${DOCKER_REGISTRY_URL}/${REPO}:latest
+              docker tag arboles-info-maps:${CIRCLE_SHA1} ${FULL_IMAGE}:${CIRCLE_SHA1}
+              docker tag arboles-info-maps:${CIRCLE_SHA1} ${FULL_IMAGE}:latest
             fi
       
-      # Pushear imagen al registry
+      # Pushear imagen al DigitalOcean Container Registry
       - run:
-          name: Pushear imagen al registry
+          name: Pushear imagen al DigitalOcean Registry
           command: |
-            if [ -z "${DOCKER_REGISTRY_URL}" ] || [ -z "${DOCKER_REGISTRY_REPOSITORY:-arboles-info-maps}" ]; then
-              echo "⚠️  Variables de registry no configuradas. Saltando push."
+            if [ -z "${DO_REGISTRY_TOKEN}" ]; then
+              echo "⚠️  Variable DO_REGISTRY_TOKEN no configurada. Saltando push."
               exit 0
             fi
-            REPO="${DOCKER_REGISTRY_REPOSITORY:-arboles-info-maps}"
-            echo "📤 Pusheando imagen a: ${DOCKER_REGISTRY_URL}/${REPO}"
+            REGISTRY="registry.digitalocean.com"
+            REGISTRY_NAME="${DO_REGISTRY_NAME:-arboles-info}"
+            IMAGE_NAME="${DO_IMAGE_NAME:-arboles-info-maps}"
+            FULL_IMAGE="${REGISTRY}/${REGISTRY_NAME}/${IMAGE_NAME}"
+            echo "📤 Pusheando imagen a: ${FULL_IMAGE}"
             # Priorizar el tag de git si existe
             if [ -n "${CIRCLE_TAG}" ]; then
               echo "📤 Pusheando tag de git: ${CIRCLE_TAG}"
-              docker push ${DOCKER_REGISTRY_URL}/${REPO}:${CIRCLE_TAG}
-              docker push ${DOCKER_REGISTRY_URL}/${REPO}:latest
-              docker push ${DOCKER_REGISTRY_URL}/${REPO}:${CIRCLE_SHA1}
+              docker push ${FULL_IMAGE}:${CIRCLE_TAG} || (echo "⚠️  Error pusheando tag ${CIRCLE_TAG}" && exit 1)
+              docker push ${FULL_IMAGE}:latest || (echo "⚠️  Error pusheando latest" && exit 1)
+              docker push ${FULL_IMAGE}:${CIRCLE_SHA1} || (echo "⚠️  Error pusheando SHA ${CIRCLE_SHA1}" && exit 1)
             else
               echo "📤 Pusheando SHA: ${CIRCLE_SHA1}"
-              docker push ${DOCKER_REGISTRY_URL}/${REPO}:${CIRCLE_SHA1}
-              docker push ${DOCKER_REGISTRY_URL}/${REPO}:latest
+              docker push ${FULL_IMAGE}:${CIRCLE_SHA1} || (echo "⚠️  Error pusheando SHA ${CIRCLE_SHA1}" && exit 1)
+              docker push ${FULL_IMAGE}:latest || (echo "⚠️  Error pusheando latest" && exit 1)
             fi
-            echo "✅ Imagen pusheada exitosamente"
+            echo "✅ Imagen pusheada exitosamente a DigitalOcean Container Registry"
+            echo "📦 Imagen disponible en: ${FULL_IMAGE}"
 
   # Job: Security Checks (opcional)
   security:
