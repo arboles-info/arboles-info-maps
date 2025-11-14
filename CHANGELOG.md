@@ -1,3 +1,9 @@
+## v0.0.4 (2025-11-14)
+
+### Fix
+
+- **.circleci/config.yml**: changed filter of the main workflow (#36)
+
 ## v0.0.3 (2025-11-13)
 
 ### Fix
