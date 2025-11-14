@@ -262,11 +262,6 @@ workflows:
       - test
       - build-docker
       - security
-    filters:
-      tags:
-        only: /.*/
-      branches:
-        ignore: /.*/
 
   # Workflow para PRs: solo tests y linting
   pull-request:
