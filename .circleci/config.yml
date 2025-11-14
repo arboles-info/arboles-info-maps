@@ -255,7 +255,7 @@ workflows:
   # La verificación de que el tag está en main se hace en cada job
   main:
     jobs:
-      - test:
+      - test
       - security:
           requires:
             - test
