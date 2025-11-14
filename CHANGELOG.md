@@ -1,3 +1,9 @@
+## v0.0.5 (2025-11-14)
+
+### Fix
+
+- **.circleci/config.yml**: Delete docker version from config
+
 ## v0.0.4 (2025-11-14)
 
 ### Fix
