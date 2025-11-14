@@ -1,3 +1,9 @@
+## v0.1.7 (2025-11-14)
+
+### Fix
+
+- **.circleci/config.yml**: circle configuration
+
 ## v0.1.6 (2025-11-14)
 
 ### Fix
