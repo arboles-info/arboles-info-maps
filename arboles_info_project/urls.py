@@ -16,8 +16,25 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('maps.urls')),
 ]
+
+# Servir archivos estáticos en desarrollo
+if settings.DEBUG:
+    # Servir desde STATICFILES_DIRS (desarrollo)
+    for static_dir in settings.STATICFILES_DIRS:
+        urlpatterns += static(settings.STATIC_URL, document_root=static_dir)
+    # También servir desde STATIC_ROOT si existe y tiene contenido
+    import os
+    static_root = settings.STATIC_ROOT
+    if os.path.exists(static_root) and os.path.isdir(static_root):
+        try:
+            if os.listdir(static_root):
+                urlpatterns += static(settings.STATIC_URL, document_root=static_root)
+        except OSError:
+            pass
