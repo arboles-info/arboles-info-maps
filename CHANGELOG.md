@@ -1,3 +1,9 @@
+## v0.1.4 (2025-11-14)
+
+### Fix
+
+- **.circleci/config.yml**: moved filters to workflow
+
 ## v0.1.3 (2025-11-14)
 
 ### Fix
