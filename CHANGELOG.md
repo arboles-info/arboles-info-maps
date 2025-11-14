@@ -1,3 +1,9 @@
+## v0.0.7 (2025-11-14)
+
+### Fix
+
+- **.circleci/config.yml**: fixes filters adding to each job
+
 ## v0.0.6 (2025-11-14)
 
 ### Fix
