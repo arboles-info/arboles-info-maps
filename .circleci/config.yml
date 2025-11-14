@@ -258,7 +258,6 @@ workflows:
   # Workflow principal: se ejecuta solo cuando se hace push de un tag
   # La verificación de que el tag está en main se hace en cada job
   main:
-    version: 2.1
     jobs:
       - test:
           filters:
