@@ -1,3 +1,9 @@
+## v0.0.6 (2025-11-14)
+
+### Fix
+
+- **.circleci/config.yml**: restore correct workflow filters for tags
+
 ## v0.0.5 (2025-11-14)
 
 ### Fix
