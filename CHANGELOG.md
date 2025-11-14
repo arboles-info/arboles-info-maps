@@ -1,3 +1,9 @@
+## v0.1.8 (2025-11-14)
+
+### Fix
+
+- **pyproject.toml**: changes bump_message template
+
 ## v0.1.7 (2025-11-14)
 
 ### Fix
