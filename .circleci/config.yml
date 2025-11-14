@@ -259,8 +259,10 @@ workflows:
       - build-docker
       - security
     filters:
+      tags:
+        only: /.*/
       branches:
-        only: main
+        ignore: /.*/
 
   # Workflow para PRs: solo tests y linting
   pull-request:
