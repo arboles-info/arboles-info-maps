@@ -6,9 +6,7 @@ version_files = [
     "pyproject.toml:version"
 ]
 tag_format = "v$version"
-bump_message = """chore(release): bump version $current_version → $new_version
-
-[skip ci]"""
+bump_message = """chore(release): bump version $current_version → $new_version"""
 update_changelog_on_bump = true
 changelog_file = "CHANGELOG.md"
 changelog_incremental = true
