@@ -260,13 +260,13 @@ workflows:
   main:
     version: 2.1
     jobs:
-      - test
+      - test:
           filters:
             branches:
               only: main
             tags:
               only: /.*/
-      - security
+      - security:
           requires:
             - test
           filters:
@@ -274,7 +274,7 @@ workflows:
               only: main
             tags:
               only: /.*/
-      - build-docker
+      - build-docker:
           requires:
             - security
           filters:
