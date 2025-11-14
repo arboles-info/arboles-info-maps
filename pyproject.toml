@@ -1,6 +1,6 @@
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.0.8"
+version = "0.1.0"
 version_files = [
     "arboles_info_project/__version__.py:__version__",
     "pyproject.toml:version"

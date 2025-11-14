@@ -1,3 +1,9 @@
+## v0.1.0 (2025-11-14)
+
+### Feat
+
+- fixes verison on main workflow
+
 ## v0.0.8 (2025-11-14)
 
 ### Fix
