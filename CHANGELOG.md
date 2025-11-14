@@ -1,3 +1,9 @@
+## v0.1.3 (2025-11-14)
+
+### Fix
+
+- **.circleci/config.yml**: removed docker remote version
+
 ## v0.1.2 (2025-11-14)
 
 ### Fix
