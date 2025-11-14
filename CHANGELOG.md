@@ -1,3 +1,9 @@
+## v0.1.5 (2025-11-14)
+
+### Fix
+
+- **.circleci/config.yml**: removed filters
+
 ## v0.1.4 (2025-11-14)
 
 ### Fix
