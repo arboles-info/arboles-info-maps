@@ -109,10 +109,6 @@ jobs:
               echo "⚠️  No se detectó un tag, continuando..."
             fi
       
-      # Setup Docker Buildx
-      - setup_remote_docker:
-          version: 24.0.5
-      
       # Instalar make si no está disponible
       - run:
           name: Verificar make
